@@ -174,7 +174,6 @@ drive_auth(cache = ".secrets", email = TRUE)
 
 Include a series of functions to call later in the file for processing data imports.
 
-
 ```{r}
 #| label: Snapshot-folder
 #| echo: false
@@ -224,9 +223,7 @@ get_latest_snapshot <- function(base_folder_id = base_folder_id1) {
 
 ## Import Inputs
 
-Data was imported from the PRULO registry. Configuration tables were also loaded, including the product table to describe the products of interest and list identifiers to match to surgical records. 
-The table was modified to include a material column (PEEK or BR) and product identifiers.
-
+Data was imported from the PRULO registry. Configuration tables were also loaded, including the product table to describe the products of interest and list identifiers to match to surgical records. The table was modified to include a material column (PEEK or BR) and product identifiers.
 
 ```{r}
 #| label: Specify-sources
@@ -1833,7 +1830,6 @@ gtsummary::as_flex_table(TableRepB) |> flextable::set_table_properties(
 
 The overall registry enrolment is summarised in @tbl-surgical, describing how the population is summarised into cohorts.
 
-
 # Product Report 1 - Healix Advance PEEK with Dynacord
 
 ## Sample Selection
@@ -2490,7 +2486,6 @@ gtsummary::as_flex_table(TableRep1RC6) |> flextable::set_table_properties(
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
 
-
 ```{r}
 #| label: tbl-rept1bt1
 #| tbl-cap: "Summary of PRULO Report 1 (Biceps Tenodesis) Case - Patient Characteristics"
@@ -2573,8 +2568,6 @@ gtsummary::as_flex_table(TableRep1BT1) |> flextable::set_table_properties(
 
 ```
 
-
-
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
@@ -2621,7 +2614,6 @@ gtsummary::as_flex_table(TableRep1BT2) |> flextable::set_table_properties(
   
 ```
 
-
 ### Treatment Survival
 
 ```{epoxy Duration Rep1 Proc2}
@@ -2635,7 +2627,7 @@ Individual failure data can be accessed in [Attachment 1](https://docs.google.co
 
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
 
-Table 9: 
+Table 9:
 
 ```{r}
 #| label: tbl-rept1bt3
@@ -2660,8 +2652,6 @@ gtsummary::as_flex_table(TableRep1BT3) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 ```{r Failure Report Rep1A Proc2}
 
@@ -2715,7 +2705,7 @@ FailuresRep1BT <-
 
 Complications and adverse events as confirmed by the surgeons are summarised below.
 
-Table 10: 
+Table 10:
 
 ```{r}
 #| label: tbl-rept1bt4
@@ -2786,8 +2776,6 @@ gtsummary::as_flex_table(TableRep1BT4) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 ```{r}
 #| label: Reoperations-Report-Rep1A-Proc2
@@ -2893,8 +2881,6 @@ Rep1BTPROM1 / Rep1BTPROM2 / Rep1BTPROM3
 
 ```
 
-
-
 ```{r}
 #| label: tbl-PROMsrep1BT1
 #| tbl-cap: "Summary of PRULO Report 1 (Biceps Tenodesis) Cases - QuickDASH."
@@ -2924,8 +2910,6 @@ gtsummary::as_flex_table(TableRep1BT5) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 ```{r}
 #| label: tbl-PROMsrep1BT2
@@ -2957,7 +2941,6 @@ gtsummary::as_flex_table(TableRep1BT6) |> flextable::set_table_properties(
 
 
 ```
-
 
 # Product Report 2 - Healix Advance Knotless PEEK
 
@@ -3118,7 +3101,6 @@ Usage of the Product within the patient group is summarised below.
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
 
-
 ```{r}
 #| label: tbl-Rep2RC1
 #| tbl-cap: "Summary of PRULO Report 2 (Rotator Cuff) Case - Patient Characteristics"
@@ -3201,7 +3183,6 @@ TableRep2RC1 <-
 
 ```
 
-
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
@@ -3261,8 +3242,6 @@ TableRep2RC2 <-
   
 ```
 
-
-
 ### Treatment Survival
 
 ```{epoxy}
@@ -3273,7 +3252,6 @@ The mean follow up duration is {round(SelectRep2RC |> ungroup() |> summarise(mea
 ```
 
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
-
 
 ```{r}
 #| label: tbl-Rep2RC3
@@ -3298,7 +3276,6 @@ TableRep2RC3 <- tbl_survfit(
 )
 
 ```
-
 
 ```{r}
 #| label:  Failure-Report-Rep2A-Proc1
@@ -3365,7 +3342,6 @@ SelectRep2Other <- SelectRep2 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-Rep2RC4
@@ -3443,7 +3419,6 @@ TableRep2RC4 <- SelectRep2RC |>
 )
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep2A-Proc1
@@ -3555,7 +3530,7 @@ Rep2RCPROM1 / Rep2RCPROM2 / Rep2RCPROM3
 
 Figure 1: Complete case analysis of QDASH(Top), WORC Index Normalised (Middle), and WORC Physical Question 3 (Bottom).
 
-Table 5: 
+Table 5:
 
 ```{r}
 #| label: tbl-PROMsRep2RC1
@@ -3590,8 +3565,6 @@ gtsummary::as_flex_table(TableRep2RC5) |> flextable::set_table_properties(
 
 ```
 
-
-
 ```{r}
 #| label: tbl-PROMsRep2RC2
 #| tbl-cap: "Summary of PRULO Report 2 (Rotator Cuff) Cases - Western Ontario Rotator Cuff Index"
@@ -3620,7 +3593,6 @@ gtsummary::as_flex_table(TableRep2RC6) |> flextable::set_table_properties(
 )
 
 ```
-
 
 ## Procedure Report - Biceps Tenodesis
 
@@ -3710,7 +3682,6 @@ gtsummary::as_flex_table(TableRep2BT1) |> flextable::set_table_properties(
 
 ```
 
-
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
@@ -3760,7 +3731,6 @@ gtsummary::as_flex_table(TableRep2BT2) |> flextable::set_table_properties(
   
 ```
 
-
 ### Treatment Survival
 
 ```{epoxy}
@@ -3797,8 +3767,6 @@ gtsummary::as_flex_table(TableRep2BT3) |> flextable::set_table_properties(
   )
 )
 ```
-
-
 
 ```{r}
 #| label:  Failure-Report-Rep2A-Proc2
@@ -3924,8 +3892,6 @@ gtsummary::as_flex_table(TableRep2BT4) |> flextable::set_table_properties(
 
 ```
 
-
-
 ```{r}
 #| label:  Reoperations-Report-Rep2A-Proc2
 
@@ -4027,7 +3993,6 @@ Rep2BTPROM1 / Rep2BTPROM2 / Rep2BTPROM3
 
 ```
 
-
 ```{r}
 #| label: tbl-PROMsrep2BT1
 #| tbl-cap: "Summary of PRULO Report 2 (Biceps Tenodesis) Cases - QuickDASH"
@@ -4057,7 +4022,6 @@ gtsummary::as_flex_table(TableRep2BT5) |> flextable::set_table_properties(
 
 ```
 
-
 ```{r}
 #| label: tbl-PROMsrep2BT2
 #| tbl-cap: "Summary of PRULO Report 2 (Biceps Tenodesis) Cases - Western Ontario Rotator Cuff Index"
@@ -4086,7 +4050,6 @@ gtsummary::as_flex_table(TableRep2BT6) |> flextable::set_table_properties(
   )
 )
 ```
-
 
 # Product Report 3 - Healix Advance Knotless BR
 
@@ -4243,7 +4206,6 @@ Usage of the Product within the patient group is summarised below.
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
 
-
 ```{r}
 #| label: tbl-Rep3RC1
 #| tbl-cap: "Summary of PRULO Report 3 (Rotator Cuff) Cases - Patient Characteristics"
@@ -4394,7 +4356,6 @@ The mean follow up duration is {round(SelectRep3RC |> ungroup() |> summarise(mea
 
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
 
-
 ```{r}
 #| label: tbl-Rep3RC34
 #| tbl-cap: "Summary of PRULO Report 3 (Rotator Cuff) Procedure Survival"
@@ -4485,7 +4446,6 @@ SelectRep3Other <- SelectRep3 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-Rep3RC4
@@ -4670,9 +4630,6 @@ Rep3RCPROM1 / Rep3RCPROM2 / Rep3RCPROM3
 
 ```
 
-
-
-
 ```{r}
 #| label: tbl-Rep3RC5
 #| tbl-cap: "Summary of PRULO Report 3 (Rotator Cuff) Cases - QuickDASH"
@@ -4703,8 +4660,6 @@ gtsummary::as_flex_table(TableRep3RC5) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 ```{r}
 #| label: tbl-Rep3RC6
@@ -4880,7 +4835,6 @@ Failure or revision events as identified in the registry for this cohort are sum
 
 Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit)
 
-
 ```{r}
 #| label: tbl-Rep3BT3
 #| tbl-cap: "Summary of PRULO Report 3 (Biceps Tenodesis) procedure survival"
@@ -4953,7 +4907,6 @@ FailuresRep3BT <-
 ### Adverse Events
 
 Complications and adverse events as confirmed by the surgeons are summarised below.
-
 
 ```{r}
 #| label: tbl-Rep3BT4
@@ -5126,8 +5079,6 @@ Rep3BTPROM1 / Rep3BTPROM2 / Rep3BTPROM3
 
 ```
 
-
-
 ```{r}
 #| label: tbl-PROMsrep3BT1
 #| tbl-cap: "Summary of PRULO Report 3 (Biceps Tenodesis) Cases - QuickDASH"
@@ -5158,8 +5109,6 @@ gtsummary::as_flex_table(TableRep3BT5) |> flextable::set_table_properties(
 
 ```
 
-
-
 ```{r}
 #| label: tbl-PROMsrep3BT2
 #| tbl-cap: "Summary of PRULO Report 3 (Biceps Tenodesis) Cases - Western Ontario Rotator Cuff Index"
@@ -5189,7 +5138,6 @@ gtsummary::as_flex_table(TableRep3BT6) |> flextable::set_table_properties(
   )
 )
 ```
-
 
 # Product Report 4 - Healix Advance BR with Dynacord
 
@@ -5345,7 +5293,6 @@ Usage of the Product within the patient group is summarised below.
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
 
-
 ```{r}
 #| label: tbl-TableRep4RC1
 #| tbl-cap: "Summary of PRULO Report 4 (Rotator Cuff) Case - Patient Characteristics"
@@ -5495,7 +5442,6 @@ The mean follow up duration is {round(SelectRep4RC |> ungroup() |> summarise(mea
 
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
 
-
 ```{r}
 #| label: tbl-TableRep4RC3
 #| tbl-cap: "Summary of PRULO Report 4 (Rotator Cuff) Procedure Survival"
@@ -5586,7 +5532,6 @@ SelectRep4Other <- SelectRep4 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-TableRep4RC4
@@ -5768,8 +5713,6 @@ Rep4RCPROM1 / Rep4RCPROM2 / Rep4RCPROM3
 
 ```
 
-
-
 ```{r}
 #| label: tbl-TableRep4RC5
 #| tbl-cap: "Summary of PRULO Report 4 (Rotator Cuff) Cases - QuickDASH"
@@ -5798,8 +5741,6 @@ gtsummary::as_flex_table(TableRep4RC5) |> flextable::set_table_properties(
     )
 )
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep4RC6
@@ -5977,7 +5918,6 @@ Individual failure data can be accessed in [Attachment 1](https://docs.google.co
 
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
 
-
 ```{r}
 #| label: tbl-TableRep4BT3
 #| tbl-cap: "Summary of PRULO Report 4 (Biceps Tenodesis) procedure survival"
@@ -6051,7 +5991,6 @@ FailuresRep4BT <-
 ### Adverse Events
 
 Complications and adverse events as confirmed by the surgeons are summarised below.
-
 
 ```{r}
 #| label: tbl-TableRep4BT4
@@ -6225,8 +6164,6 @@ Rep4BTPROM1 / Rep4BTPROM2 / Rep4BTPROM3
 
 ```
 
-
-
 ```{r}
 #| label: tbl-PROMsRep4BT1
 #| tbl-cap: "Summary of PRULO Report 4 (Biceps Tenodesis) Cases - QuickDASH"
@@ -6255,7 +6192,6 @@ gtsummary::as_flex_table(TableRep4BT5) |> flextable::set_table_properties(
     )
 )
 ```
-
 
 ```{r}
 #| label: tbl-PROMsRep4BT2
@@ -6443,7 +6379,6 @@ Usage of the Product within the patient group is summarised below.
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
 
-
 ```{r}
 #| label: tbl-TableRep5RC1
 #| tbl-cap: "Summary of PRULO Report 5 (Rotator Cuff) Cases - Patient Characteristics"
@@ -6583,8 +6518,6 @@ gtsummary::as_flex_table(TableRep5RC2) |> flextable::set_table_properties(
   
 ```
 
-
-
 ### Treatment Survival
 
 ```{epoxy}
@@ -6595,7 +6528,6 @@ The mean follow up duration is {round(SelectRep5RC |> ungroup() |> summarise(mea
 ```
 
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
-
 
 ```{r}
 #| label: tbl-TableRep5RC3
@@ -6687,7 +6619,6 @@ SelectRep5Other <- SelectRep5 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-TableRep5RC4
@@ -6869,7 +6800,6 @@ Rep5RCPROM1 / Rep5RCPROM2 / Rep5RCPROM3
 
 ```
 
-
 ```{r}
 #| label: tbl-TableRep5RC5
 #| tbl-cap: "Summary of PRULO Report 5 (Rotator Cuff) Cases - QuickDASH"
@@ -6899,7 +6829,6 @@ gtsummary::as_flex_table(TableRep5RC5) |> flextable::set_table_properties(
 )
 
 ```
-
 
 ```{r}
 #| label: tbl-TableRep5RC6
@@ -6993,7 +6922,7 @@ TableRep5BT1 <-
         all_categorical() ~ "{p} ({n})"
         ),
       missing = "no"
-    )|> add_stat_label(
+    ) |> add_stat_label(
     location = "column"
   ) |> modify_table_styling(
       columns = label,
@@ -7018,8 +6947,6 @@ gtsummary::as_flex_table(TableRep5BT1) |> flextable::set_table_properties(
     )
 )
 ```
-
-
 
 ### Surgical Details
 
@@ -7068,7 +6995,6 @@ gtsummary::as_flex_table(TableRep5BT2) |> flextable::set_table_properties(
   
 ```
 
-
 ### Treatment Survival
 
 ```{epoxy}
@@ -7082,7 +7008,6 @@ Failure or revision events as identified in the registry for this cohort are sum
 Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0)
 
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
-
 
 ```{r}
 #| label: tbl-TableRep5BT3
@@ -7159,7 +7084,6 @@ FailuresRep5BT <-
 ### Adverse Events
 
 Complications and adverse events as confirmed by the surgeons are summarised below.
-
 
 ```{r}
 #| label: tbl-TableRep5BT4
@@ -7332,7 +7256,6 @@ Rep5BTPROM1 / Rep5BTPROM2 / Rep5BTPROM3
 
 ```
 
-
 ```{r}
 #| label: tbl-TableRep5BT5
 #| tbl-cap-location: top
@@ -7362,7 +7285,6 @@ gtsummary::as_flex_table(TableRep5BT5) |> flextable::set_table_properties(
     )
 )
 ```
-
 
 ```{r}
 #| label: tbl-TableRep5BT6
@@ -7552,7 +7474,6 @@ Usage of the Product within the patient group is summarised below.
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
 
-
 ```{r}
 #| label: tbl-TableRep61
 #| tbl-cap: "Summary of PRULO Report 6 (All) - Patient Characteristics"
@@ -7690,7 +7611,6 @@ The mean follow up duration is {round(SelectRep6 |> ungroup() |> summarise(mean 
 
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit).
 
-
 ```{r}
 #| label: tbl-TableRep63
 #| tbl-cap: "Summary of PRULO Report 6 (All) Cases - Procedure Survival"
@@ -7782,8 +7702,6 @@ SelectRep6Other <- SelectRep6 |> filter(
   Cohort
 )
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep64
@@ -7958,8 +7876,6 @@ Rep6PROM1 / Rep6PROM2
 
 ```
 
-
-
 ```{r}
 #| label: tbl-TableRep65
 #| tbl-cap: "Summary of PRULO Report 6 (All) Cases - QuickDASH"
@@ -8000,7 +7916,6 @@ gtsummary::as_flex_table(TableRep65) |> flextable::set_table_properties(
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
-
 
 ```{r}
 #| label: tbl-TableRep6BR1
@@ -8143,7 +8058,6 @@ The mean follow up duration is {round(SelectRep6BR |> ungroup() |> summarise(mea
 
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit).
 
-
 ```{r}
 #| label: tbl-TableRep6BR3
 #| tbl-cap: "Summary of PRULO Report 6 (Bankart Repair) Procedure Survival"
@@ -8167,8 +8081,6 @@ gtsummary::as_flex_table(TableRep6BR3) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 ```{r}
 #| label:  Failure-Report-Rep6BRA-Proc2
@@ -8236,8 +8148,6 @@ SelectRep6BROther <- SelectRep6BR |> filter(
   Cohort
 )
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep6BR4
@@ -8309,8 +8219,6 @@ gtsummary::as_flex_table(TableRep6BR4) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep6BRA-Proc2
@@ -8415,8 +8323,6 @@ Rep6PROM1 / Rep6PROM2
 
 ```
 
-
-
 ```{r}
 #| label: tbl-TableRep6BR5
 #| tbl-cap: "Summary of PRULO Report 6 (Bankart Repair) Cases - QuickDASH and WOSI Normalised"
@@ -8450,8 +8356,6 @@ gtsummary::as_flex_table(TableRep6BR5) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 # Product Report 7 - Gryphon BR with Orthocord
 
@@ -8612,7 +8516,6 @@ Usage of the Product within the patient group is summarised below.
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
 
-
 ```{r}
 #| label: tbl-TableRep71
 #| tbl-cap: "Summary of PRULO Report 7 (All) - Patient Characteristics"
@@ -8756,7 +8659,6 @@ The mean follow up duration is {round(SelectRep7 |> ungroup() |> summarise(mean 
 
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
 
-
 ```{r}
 #| label: tbl-TableRep73
 #| tbl-cap: "Summary of PRULO Report 7 (Rotator Cuff) - Procedure Survival"
@@ -8848,10 +8750,9 @@ SelectRep7Other <- SelectRep7 |> filter(
 )
 ```
 
-
 ```{r}
 #| label: tbl-TableRep74
-#| tbl-cap: " Summary of PRULO Report 7 (All) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 7 (All) Cases - Adverse Events"
 
 # Now create the summary table
 TableRep74 <- SelectRep7 |>
@@ -9025,8 +8926,6 @@ Rep7PROM1 / Rep7PROM2
 
 ```
 
-
-
 ```{r}
 #| label: tbl-TableRep75
 #| tbl-cap: " Summary of PRULO Report 7 (All) Cases - QuickDASH"
@@ -9067,7 +8966,6 @@ gtsummary::as_flex_table(TableRep75) |> flextable::set_table_properties(
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
-
 
 ```{r}
 #| label: tbl-TableRep7BR1
@@ -9209,7 +9107,6 @@ The mean follow up duration is {round(SelectRep7BR |> ungroup() |> summarise(mea
 
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
 
-
 ```{r}
 #| label: tbl-TableRep7BR3
 #| tbl-cap: "Summary of PRULO Report 7 (Bankart Repair) Cases - Procedure Survival"
@@ -9300,8 +9197,6 @@ SelectRep7BROther <- SelectRep7BR |> filter(
   Cohort
 )
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep7BR4
@@ -9475,7 +9370,6 @@ geom_boxplot()
 Rep7PROM1 / Rep7PROM2
 
 ```
-
 
 ```{r}
 #| label: tbl-TableRep7BR5
@@ -9658,8 +9552,6 @@ Usage of the Product within the patient group is summarised below.
 
 
 ```
-
-
 
 # Product Report 9 - Gryphon PEEK with Dynacord
 
@@ -9936,7 +9828,6 @@ Usage of the Product within the patient group is summarised below.
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
 
-
 ```{r}
 #| label: tbl-TableRep101
 #| tbl-cap: "Summary of PRULO Report 10 (All) - Patient Characteristics"
@@ -10086,7 +9977,6 @@ The mean follow up duration is {round(SelectRep10 |> ungroup() |> summarise(mean
 
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
 
-
 ```{r}
 #| label: tbl-TableRep103
 #| tbl-cap: "Summary of PRULO Report 10 (Rotator Cuff) - Procedure Survival"
@@ -10176,7 +10066,6 @@ SelectRep10Other <- SelectRep10 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-TableRep104
@@ -10355,8 +10244,6 @@ geom_boxplot()
 Rep10PROM1 / Rep10PROM2
 
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep105
@@ -10555,7 +10442,6 @@ Usage of the Product within the patient group is summarised below.
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
 
-
 ```{r}
 #| label: tbl-TableRep11RC1
 #| tbl-cap: "Summary of PRULO Report 11 (Rotator Cuff) Case - Patient Characteristics"
@@ -10704,7 +10590,6 @@ The mean follow up duration is {round(SelectRep11RC |> ungroup() |> summarise(me
 
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
 
-
 ```{r}
 #| label: tbl-TableRep11RC3
 #| tbl-cap: "Summary of PRULO Report 11 (Rotator Cuff) Cases - Procedure Survival"
@@ -10794,8 +10679,6 @@ SelectRep11Other <- SelectRep11 |> filter(
   Cohort
 )
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep11RC4
@@ -10976,8 +10859,6 @@ Rep11RCPROM1 / Rep11RCPROM2 / Rep11RCPROM3
 
 ```
 
-
-
 ```{r}
 #| label: tbl-TableRep11RC5
 #| tbl-cap: "Summary of PRULO Report 11 (Rotator Cuff) Cases - QuickDASH"
@@ -11007,8 +10888,6 @@ tbl_summary(by = "Timepoint",
       split = TRUE)
     )
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep11RC6
@@ -11307,13 +11186,9 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
-
-
 # Product usage patterns
 
 Product usage patterns were determined by merging multiple product datasets into a single table. This combined data was then modified to include additional information and restructured to have separate columns for different product groups. Following this, a list of product category names was established and proportions for various combinations were calculated. The results were reformatted for presentation, with count data incorporated and proportions displayed as percentages.
-
-
 
 ```{r}
 
