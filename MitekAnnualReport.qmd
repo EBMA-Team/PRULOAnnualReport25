@@ -1907,7 +1907,12 @@ SelectRep1 <- SnapshotComb4 |>
 ) |> left_join(
   ComplicTable3 |> 
     group_by(TreatmentID) |>
-    slice_max(ymd(`Reoperation Procedure Date`), n = 1) |> ungroup() |> dplyr::select(
+    slice_max(
+      ymd(`Reoperation Procedure Date`), 
+      n = 1, 
+      na_rm = TRUE,
+      with_ties = FALSE
+      ) |> ungroup() |> dplyr::select(
     TreatmentID,
     ReopDelay_Occur,
     ReopDelay_Surgery,
@@ -1915,6 +1920,26 @@ SelectRep1 <- SnapshotComb4 |>
   ),
   by = "TreatmentID"
 )
+```
+
+```{r}
+# validate slicemax
+
+SliceCheck <- ComplicTable3 |> 
+    group_by(TreatmentID) |>
+    slice_max(
+      ymd(`Reoperation Procedure Date`), 
+      n = 1, 
+      na_rm = TRUE,
+      with_ties = FALSE
+      ) |> dplyr::select(
+    TreatmentID,
+    `Complication ID`,
+    ReopDelay_Occur,
+    ReopDelay_Surgery,
+    EventDelay,
+    Timestamp
+  ) |> ungroup() 
 ```
 
 ```{r}
