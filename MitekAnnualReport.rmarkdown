@@ -32,6 +32,7 @@ execute:
   message: false
 ---
 
+
 # Preamble
 
 ## **Mitek Annual Report - Apr 2025**
@@ -98,6 +99,7 @@ The steps below outline the process for preparing registry data for analysis.
 
 Load up required packages in advance.
 
+
 ```{r}
 #| label: Load packages
 
@@ -153,9 +155,11 @@ pacman::p_load(
 
 ```
 
+
 ## Authorisations
 
 Pre-authorise access to registry datasets.
+
 
 ```{r}
 #| label: Authorisations
@@ -170,9 +174,11 @@ drive_auth(cache = ".secrets", email = TRUE)
 
 ```
 
+
 ## Functions for Processing
 
 Include a series of functions to call later in the file for processing data imports.
+
 
 
 ```{r}
@@ -222,10 +228,12 @@ get_latest_snapshot <- function(base_folder_id = base_folder_id1) {
 }
 ```
 
+
 ## Import Inputs
 
 Data was imported from the PRULO registry. Configuration tables were also loaded, including the product table to describe the products of interest and list identifiers to match to surgical records. 
 The table was modified to include a material column (PEEK or BR) and product identifiers.
+
 
 
 ```{r}
@@ -409,9 +417,11 @@ FormattedDate <- format(SnapshotDate, "%d-%b-%Y")} and the report prepared {form
 
 ```
 
+
 ## Combine and Filter for 3 month follow up
 
 The dataset was filtered to only include records with a minimum of 3 months follow up at the time of analysis.
+
 
 ```{r}
 ## Slice inputs for columns and rows
@@ -456,9 +466,11 @@ SnapshotComb <- SnapshotRC |> dplyr::select(-(c(ExternalStudyTag,Email,Phone))) 
 
 ```
 
+
 ## Prepare dataset for procedure
 
 Procedure data was combined from all cohorts. New columns were created based on conditional statements, cases were filtered where procedure data was unavailable (non-surgical, missing intraoperative data). Procedure data was further processed to standardise labels, categorised by structure (Rotator Cuff, Labrum, Capsule and Ligament) and adjunct procedures reorganised to account for variation across surgical indication.
+
 
 ```{r}
 
@@ -953,11 +965,13 @@ SnapshotComb1a <- left_join(
 )
 ```
 
+
 ## Adjust dataset for time to event
 
 To account for variations in follow up, time to event was calculated between date of surgery and change of record status. Treatment record end was defined as any change in state such that the treatment would be considered no longer active, has not achieved its clinical purpose or is no longer relevant. For example, in the case of soft tissue repair, if the target tissue represents with a retear, or the construct presents in a state such that hardware removal or replacement is recommended, then the treatment record status is to inactive and a new treatment record is created to capture the subsequent treatment. The treatments with inactive statuses were extracted to a shared file for review. The subsequent treatment was manually labelled to create the *Subsequent Treatment* variable.
 
 Additional numeric variables were calculated from inputs collected within the registry (e.g. Symptom Duration).
+
 
 ```{r}
 #| label: Survival-prep-1
@@ -1019,7 +1033,9 @@ googlesheets4::range_write(
 )
 ```
 
+
 Read in results of manual review of failure cases and categorise subsequent treatments.
+
 
 ```{r}
 
@@ -1085,9 +1101,11 @@ SnapshotCombCheck <- SnapshotComb2a |> dplyr::select(
 )
 ```
 
+
 ## Prepare adverse events
 
 Adverse events were monitored by near real-time chart review and surgical bookings. Events were added to the registry using an electronic form and linked to the treatment records. The data import was assessed for data entry validity, differences between date of event, date of reoperation and surgery date of the index treatment were calculated to assess date validity. Additional data preparation and cleaning was performed, which included filtering and standardizing key identifiers across multiple datasets. Missing values were identified to ensure data consistency. The adverse events were attached to the treatment data with filters applied to constrain to pertinent records and time periods. Time-based metrics were calculated and classification was performed based on the event descriptions using regular expressions. Finally, it conducted data quality checks, identifying potential discrepancies and duplicate entries. After the data transformation, the revised dataset was exported to an external file for review. The code then generated multiple subset datasets, each focusing on a specific type of complication and isolating the earliest occurrence for each unique treatment. This was used for retrieval for each product report.
+
 
 ```{r}
 #| label:  Complications-postop
@@ -1146,7 +1164,9 @@ There are {nrow(SnapshotComb2a |> filter(is.na(TreatmentID)))} cases with missin
 
 ```
 
+
 <!--# Clean up live tables for complications. Assess date validity and correct data entry. -->
+
 
 ```{r}
 mismatched_rows <- ComplicTable1[!(ComplicTable1$TreatmentID %in% SnapshotComb2$TreatmentID), ]
@@ -1283,7 +1303,9 @@ googlesheets4::range_write(
 )
 ```
 
+
 Split out into arrays to bounce against for each Product report
+
 
 ```{r}
 
@@ -1304,9 +1326,11 @@ ComplicIntraop <- ComplicTable3 |> group_by(TreatmentID) |> filter(Intraop == "Y
 
 ```
 
+
 <!--# Review intraoperative complications manually for mechanism -->
 
 Intraoperative complications were reviewed manually for mechanism.
+
 
 ```{r}
 #| label: Complication-discrepancies
@@ -1354,9 +1378,11 @@ googlesheets4::range_write(
             range = "A1:C")
 ```
 
+
 ## Prepare product groups of interest
 
 Tables were rearranged and the dataset was filtered against an ignore list created from the product configuration table. Regular expressions were used to match products of interest to intraoperative hardware information and to sum the instances of implantation for each product of interest.
+
 
 ```{r}
 #| label: Product-usage
@@ -1386,7 +1412,9 @@ join_by("ImplantCodes"=="Reference")
   )
 ```
 
+
 <!--# Drop Product records that are on the Ignore list -->
+
 
 ```{r}
 ProductUsage2b <-ProductUsage2 |> filter(
@@ -1464,9 +1492,11 @@ SnapshotComb3 <- left_join(
 
 ```
 
+
 ## Adjust patient demographics for presentation
 
 Recode Sex for report presentation.
+
 
 ```{r}
 SnapshotComb4 <- SnapshotComb3 |> mutate(
@@ -1480,9 +1510,11 @@ SnapshotComb4 <- SnapshotComb3 |> mutate(
 )
 ```
 
+
 ## Prepare Patient-Reported Outcomes
 
 The PRULO registry uses the QuickDASH [@gummesson2006] for all cases, Western Ontario Rotator Cuff Index (WORC) [@kirkley2003] for records placed into the Rotator Cuff cohort and the Western Ontario Shoulder Instability Index (WOSI) [@kirkley1998] for records placed in the Glenohumeral Instability cohort to monitor patient-reported outcomes before and after surgery at defined time intervals. The metrics utilised for each questionnaire in this report are the total score (QuickDaSH) and the normalised total score (WORC and WOSI). A single question from the WORC was also presented (Question 3 of the Physical subscale) that asks "How much weakness do you experience in your shoulder?" to observe potential patterns relevant specifically to cuff repair. PROMs entries were restricted to cases where the treatment record was "eligible" for the time point. Tables were reshaped and variables refactored, with delta variables generated (difference to baseline at each followup) to enable plotting and table generation.
+
 
 ```{r}
 #| label: Proms-prep
@@ -1632,9 +1664,11 @@ SnapshotPROM2 <- SnapshotPROM |>
 
 ```
 
+
 # PRULO Summary
 
 The diagram below summarises recruitment and categorisation of patients into the PRULO registry.
+
 
 ```{r}
 
@@ -1747,7 +1781,9 @@ knitr::kable(TableData)
 
 ```
 
+
 The table below summarises patient diagnoses in the PRULO registry. The primary pathology for a given presentation was derived from clinical notes and labelled with an ICD-10 (international) code. Each code was included in a configuration file to link to a registry cohort.
+
 
 ```{r}
 #| label: tbl-surgical
@@ -1829,6 +1865,7 @@ gtsummary::as_flex_table(TableRepB) |> flextable::set_table_properties(
 
 ```
 
+
 <!--# Removed SymptomDurationCat - turning it into a factor was problematic when constructing the summary table with gtsummary-->
 
 The overall registry enrolment is summarised in @tbl-surgical, describing how the population is summarised into cohorts.
@@ -1839,6 +1876,7 @@ The overall registry enrolment is summarised in @tbl-surgical, describing how th
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label: Reference-Code-Rep1
@@ -1950,11 +1988,13 @@ SelectRep1BTPROM1<- SelectRep1PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodes
 SelectRep1BTPROM2<- SelectRep1PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
 
 <!--# Insert date range into epoxy block -->
+
 
 ```{epoxy}
 #| label:  Overview-Rep1
@@ -1991,11 +2031,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 ## Procedure Report - Rotator Cuff Repair
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 ```{r}
 #| label: tbl-rep1RC1pat
@@ -2080,9 +2122,11 @@ gtsummary::as_flex_table(TableRep1RC1) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| eval: false
@@ -2090,7 +2134,9 @@ Surgical findings and management strategies are summarised below.
 CuffStatus1 <- SelectRep1RC |> filter(is.na(CuffStatus))
 ```
 
+
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
+
 
 ```{r}
 #| label: tbl-rep1RC1Surg
@@ -2137,7 +2183,9 @@ gtsummary::as_flex_table(TableRep1RC2) |> flextable::set_table_properties(
   
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep1-Proc1
@@ -2146,7 +2194,9 @@ The mean follow up duration is {round(SelectRep1RC |> ungroup() |> summarise(mea
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label: tbl-rep1RC3
@@ -2222,9 +2272,11 @@ FailuresRep1RC <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label:  Complication-Other-Rep1
@@ -2377,7 +2429,9 @@ SelectRep1RCReop <- ComplicTable3 |> filter(
 
 ```
 
+
 <!--# Write reoperations to external sheet -->
+
 
 ```{epoxy}
 #| label: Reoperations-Report-Rep1B-Proc1
@@ -2399,9 +2453,11 @@ SelectRep1RCReop <- ComplicTable3 |> filter(
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Index Normalised, and WORC Physical Question 3 (How much weakness do you experience in your shoulder?) is summarised below.
+
 
 ```{r}
 #| label: fig-PROMs-Rep1
@@ -2484,11 +2540,13 @@ gtsummary::as_flex_table(TableRep1RC6) |> flextable::set_table_properties(
 
 ```
 
+
 ## Procedure Report - Biceps Tenodesis
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -2575,9 +2633,11 @@ gtsummary::as_flex_table(TableRep1BT1) |> flextable::set_table_properties(
 
 
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| label: tbl-rept1bt2
@@ -2622,12 +2682,15 @@ gtsummary::as_flex_table(TableRep1BT2) |> flextable::set_table_properties(
 ```
 
 
+
 ### Treatment Survival
+
 
 ```{epoxy Duration Rep1 Proc2}
 
 The mean follow up duration is {round(SelectRep1BT |> ungroup() |> summarise(mean = mean(Duration))/52,1)} years, with a standard deviation of {round(SelectRep1BT |> ungroup() |> summarise(sd = sd(Duration))/52,2)} years.
 ```
+
 
 Failure or revision events as identified in the registry for this cohort are summarised below.
 
@@ -2636,6 +2699,7 @@ Individual failure data can be accessed in [Attachment 1](https://docs.google.co
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
 
 Table 9: 
+
 
 ```{r}
 #| label: tbl-rept1bt3
@@ -2660,8 +2724,6 @@ gtsummary::as_flex_table(TableRep1BT3) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 ```{r Failure Report Rep1A Proc2}
 
@@ -2709,6 +2771,7 @@ FailuresRep1BT <-
  )}
 ```
 
+
 <!--# # This is fun, the range needs to be at the bottom of the RC failures and go to the end of the range of the new dataframe (BT failures). The +1 represents the conversion between R dataframe and the googlesheets table.  -->
 
 ### Adverse Events
@@ -2716,6 +2779,7 @@ FailuresRep1BT <-
 Complications and adverse events as confirmed by the surgeons are summarised below.
 
 Table 10: 
+
 
 ```{r}
 #| label: tbl-rept1bt4
@@ -2787,8 +2851,6 @@ gtsummary::as_flex_table(TableRep1BT4) |> flextable::set_table_properties(
 
 ```
 
-
-
 ```{r}
 #| label: Reoperations-Report-Rep1A-Proc2
 
@@ -2851,7 +2913,9 @@ SelectRep1BTReop <- ComplicTable3 |> filter(
 
 ```
 
+
 Write reoperations to external sheet
+
 
 ```{epoxy}
 #| label:  Reoperations-Report-Rep1B-Proc2
@@ -2871,9 +2935,11 @@ Write reoperations to external sheet
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Normalised, and WORC Physical Q3 is summarised below.
+
 
 ```{r}
 #| label: fig-PROMsrep1BT
@@ -2892,8 +2958,6 @@ geom_boxplot()
 Rep1BTPROM1 / Rep1BTPROM2 / Rep1BTPROM3
 
 ```
-
-
 
 ```{r}
 #| label: tbl-PROMsrep1BT1
@@ -2924,8 +2988,6 @@ gtsummary::as_flex_table(TableRep1BT5) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 ```{r}
 #| label: tbl-PROMsrep1BT2
@@ -2959,11 +3021,13 @@ gtsummary::as_flex_table(TableRep1BT6) |> flextable::set_table_properties(
 ```
 
 
+
 # Product Report 2 - Healix Advance Knotless PEEK
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label: Reference-Code-Rep2
@@ -3073,9 +3137,11 @@ SelectRep2BTPROM1<- SelectRep2PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodes
 SelectRep2BTPROM2<- SelectRep2PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label:  Overview-Rep2
@@ -3112,11 +3178,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 ## Procedure Report - Rotator Cuff Repair
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -3202,9 +3270,11 @@ TableRep2RC1 <-
 ```
 
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| eval: false
@@ -3213,7 +3283,9 @@ Surgical findings and management strategies are summarised below.
 CuffStatus2 <- SelectRep2RC |> filter(is.na(CuffStatus))
 ```
 
+
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
+
 
 ```{r}
 #| label: tbl-Rep2RC2
@@ -3263,7 +3335,9 @@ TableRep2RC2 <-
 
 
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep2-Proc1
@@ -3272,7 +3346,9 @@ The mean follow up duration is {round(SelectRep2RC |> ungroup() |> summarise(mea
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 
 ```{r}
@@ -3298,7 +3374,6 @@ TableRep2RC3 <- tbl_survfit(
 )
 
 ```
-
 
 ```{r}
 #| label:  Failure-Report-Rep2A-Proc1
@@ -3351,9 +3426,11 @@ FailuresRep2RC <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label:  Complication-Other-Rep2
@@ -3365,7 +3442,6 @@ SelectRep2Other <- SelectRep2 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-Rep2RC4
@@ -3444,7 +3520,6 @@ TableRep2RC4 <- SelectRep2RC |>
 
 ```
 
-
 ```{r}
 #| label:  Reoperations-Report-Rep2A-Proc1
 
@@ -3507,7 +3582,9 @@ SelectRep2RCReop <- ComplicTable3 |> filter(
 
 ```
 
+
 Write reoperations to external sheet
+
 
 ```{epoxy}
 #| label:  Reoperations-Report-Rep2B-Proc1
@@ -3529,9 +3606,11 @@ Write reoperations to external sheet
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Index Normalised, and WORC Physical Question 3 (How much weakness do you experience in your shoulder?) is summarised below.
+
 
 ```{r}
 #| label: fig-PROMs-Rep2-Proc1
@@ -3553,9 +3632,11 @@ Rep2RCPROM1 / Rep2RCPROM2 / Rep2RCPROM3
 
 ```
 
+
 Figure 1: Complete case analysis of QDASH(Top), WORC Index Normalised (Middle), and WORC Physical Question 3 (Bottom).
 
 Table 5: 
+
 
 ```{r}
 #| label: tbl-PROMsRep2RC1
@@ -3590,8 +3671,6 @@ gtsummary::as_flex_table(TableRep2RC5) |> flextable::set_table_properties(
 
 ```
 
-
-
 ```{r}
 #| label: tbl-PROMsRep2RC2
 #| tbl-cap: "Summary of PRULO Report 2 (Rotator Cuff) Cases - Western Ontario Rotator Cuff Index"
@@ -3622,11 +3701,13 @@ gtsummary::as_flex_table(TableRep2RC6) |> flextable::set_table_properties(
 ```
 
 
+
 ## Procedure Report - Biceps Tenodesis
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 ```{r}
 #| label: tbl-Rep2BT1
@@ -3711,9 +3792,11 @@ gtsummary::as_flex_table(TableRep2BT1) |> flextable::set_table_properties(
 ```
 
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| label: tbl-Rep2BT2
@@ -3761,7 +3844,9 @@ gtsummary::as_flex_table(TableRep2BT2) |> flextable::set_table_properties(
 ```
 
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep2-Proc2
@@ -3769,11 +3854,13 @@ gtsummary::as_flex_table(TableRep2BT2) |> flextable::set_table_properties(
 The mean follow up duration is {round(SelectRep2BT |> ungroup() |> summarise(mean = mean(Duration))/52,1)} years, with a standard deviation of {round(SelectRep2BT |> ungroup() |> summarise(sd = sd(Duration))/52,2)} years.
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below.
 
 Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0)
 
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
+
 
 ```{r}
 #| label: tbl-Rep2BT3
@@ -3797,8 +3884,6 @@ gtsummary::as_flex_table(TableRep2BT3) |> flextable::set_table_properties(
   )
 )
 ```
-
-
 
 ```{r}
 #| label:  Failure-Report-Rep2A-Proc2
@@ -3848,11 +3933,13 @@ FailuresRep2BT <-
  )}
 ```
 
+
 <!--# # This is fun, the range needs to be at the bottom of the RC failures and go to the end of the range of the new dataframe (BT failures). The +1 represents the conversion between R dataframe and the googlesheets table. -->
 
 ### Adverse Events
 
 Complications and adverse events as confirmed by the surgeons are summarised below.
+
 
 ```{r}
 #| label: tbl-Rep2BT4
@@ -3924,8 +4011,6 @@ gtsummary::as_flex_table(TableRep2BT4) |> flextable::set_table_properties(
 
 ```
 
-
-
 ```{r}
 #| label:  Reoperations-Report-Rep2A-Proc2
 
@@ -3988,7 +4073,9 @@ SelectRep2BTReop <- ComplicTable3 |> filter(
 
 ```
 
+
 Write reoperations to external sheet
+
 
 ```{epoxy}
 #| label:  Reoperations-Report-Rep2B-Proc2
@@ -4006,9 +4093,11 @@ Write reoperations to external sheet
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Normalised, and WORC Physical Q3 is summarised below.
+
 
 ```{r}
 #| label: fig-PROMRep2Proc2
@@ -4026,7 +4115,6 @@ geom_boxplot()
 Rep2BTPROM1 / Rep2BTPROM2 / Rep2BTPROM3
 
 ```
-
 
 ```{r}
 #| label: tbl-PROMsrep2BT1
@@ -4056,7 +4144,6 @@ gtsummary::as_flex_table(TableRep2BT5) |> flextable::set_table_properties(
 )
 
 ```
-
 
 ```{r}
 #| label: tbl-PROMsrep2BT2
@@ -4088,11 +4175,13 @@ gtsummary::as_flex_table(TableRep2BT6) |> flextable::set_table_properties(
 ```
 
 
+
 # Product Report 3 - Healix Advance Knotless BR
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label:  Reference-Code-Rep3
@@ -4198,9 +4287,11 @@ SelectRep3BTPROM1<- SelectRep3PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodes
 SelectRep3BTPROM2<- SelectRep3PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label:  Overview-Rep3
@@ -4237,11 +4328,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 ## Procedure Report - Rotator Cuff Repair
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -4326,9 +4419,11 @@ gtsummary::as_flex_table(TableRep3RC1) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| eval: false
@@ -4336,7 +4431,9 @@ Surgical findings and management strategies are summarised below.
 CuffStatus2 <- SelectRep3RC |> filter(is.na(CuffStatus))
 ```
 
+
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
+
 
 ```{r}
 #| label: tbl-Rep3RC2
@@ -4383,7 +4480,9 @@ gtsummary::as_flex_table(TableRep3RC2) |> flextable::set_table_properties(
 
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep3-Proc1
@@ -4392,7 +4491,9 @@ The mean follow up duration is {round(SelectRep3RC |> ungroup() |> summarise(mea
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 
 ```{r}
@@ -4469,9 +4570,11 @@ FailuresRep3RC <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label:  Complication-Other-Rep3
@@ -4485,7 +4588,6 @@ SelectRep3Other <- SelectRep3 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-Rep3RC4
@@ -4626,7 +4728,9 @@ SelectRep3RCReop <- ComplicTable3 |> filter(
 
 ```
 
+
 Write reoperations to external sheet
+
 
 ```{epoxy}
 #| label: Reoperations-Report-Rep3B-Proc1
@@ -4649,9 +4753,11 @@ Write reoperations to external sheet
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Index Normalised, and WORC Physical Question 3 (How much weakness do you experience in your shoulder?) is summarised below.
+
 
 ```{r}
 #| label: fig-PROMsRep3RC
@@ -4669,9 +4775,6 @@ geom_boxplot()
 Rep3RCPROM1 / Rep3RCPROM2 / Rep3RCPROM3
 
 ```
-
-
-
 
 ```{r}
 #| label: tbl-Rep3RC5
@@ -4704,8 +4807,6 @@ gtsummary::as_flex_table(TableRep3RC5) |> flextable::set_table_properties(
 
 ```
 
-
-
 ```{r}
 #| label: tbl-Rep3RC6
 #| tbl-cap: "Summary of PRULO Report 3 (Rotator Cuff) Cases - Western Ontario Rotator Cuff Index"
@@ -4734,11 +4835,13 @@ gtsummary::as_flex_table(TableRep3RC6) |> flextable::set_table_properties(
 )
 ```
 
+
 ## Procedure Report - Biceps Tenodesis
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 ```{r}
 #| label: tbl-Rep3BT1
@@ -4822,9 +4925,11 @@ gtsummary::as_flex_table(TableRep3BT1) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| label: tbl-Rep3BT2
@@ -4868,7 +4973,9 @@ TableRep3BT2 <-
 
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep3-Proc2
@@ -4876,9 +4983,11 @@ TableRep3BT2 <-
 The mean follow up duration is {round(SelectRep3BT |> ungroup() |> summarise(mean = mean(Duration))/52,1)} years, with a standard deviation of {round(SelectRep3BT |> ungroup() |> summarise(sd = sd(Duration))/52,2)} years.
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below.
 
 Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit)
+
 
 
 ```{r}
@@ -4950,9 +5059,11 @@ FailuresRep3BT <-
  )}
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events as confirmed by the surgeons are summarised below.
+
 
 
 ```{r}
@@ -5086,7 +5197,9 @@ SelectRep3BTReop <- ComplicTable3 |> filter(
 
 ```
 
+
 <!--# Write reoperations to external sheet -->
+
 
 ```{epoxy}
 #| label:  Reoperations-Report-Rep3B-Proc2
@@ -5104,9 +5217,11 @@ SelectRep3BTReop <- ComplicTable3 |> filter(
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Normalised, and WORC Physical Q3 is summarised below.
+
 
 ```{r}
 #| label: fig-PROMsRep3BT
@@ -5125,8 +5240,6 @@ geom_boxplot()
 Rep3BTPROM1 / Rep3BTPROM2 / Rep3BTPROM3
 
 ```
-
-
 
 ```{r}
 #| label: tbl-PROMsrep3BT1
@@ -5157,8 +5270,6 @@ gtsummary::as_flex_table(TableRep3BT5) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 ```{r}
 #| label: tbl-PROMsrep3BT2
@@ -5191,11 +5302,13 @@ gtsummary::as_flex_table(TableRep3BT6) |> flextable::set_table_properties(
 ```
 
 
+
 # Product Report 4 - Healix Advance BR with Dynacord
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label: Reference-Code-Rep4
@@ -5303,9 +5416,11 @@ SelectRep4BTPROM1<- SelectRep4PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodes
 SelectRep4BTPROM2<- SelectRep4PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label:  Overview-Rep4
@@ -5339,11 +5454,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 ## Procedure Report - Rotator Cuff Repair
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -5428,9 +5545,11 @@ gtsummary::as_flex_table(TableRep4RC1) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| eval: false
@@ -5438,7 +5557,9 @@ Surgical findings and management strategies are summarised below.
 CuffStatus2 <- SelectRep4RC |> filter(is.na(CuffStatus))
 ```
 
+
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
+
 
 ```{r}
 #| label: tbl-TableRep4RC2
@@ -5484,7 +5605,9 @@ gtsummary::as_flex_table(TableRep4RC2) |> flextable::set_table_properties(
 
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep4-Proc1
@@ -5493,7 +5616,9 @@ The mean follow up duration is {round(SelectRep4RC |> ungroup() |> summarise(mea
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 
 ```{r}
@@ -5571,9 +5696,11 @@ FailuresRep4RC <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label:  Complication-Other-Rep4
@@ -5586,7 +5713,6 @@ SelectRep4Other <- SelectRep4 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-TableRep4RC4
@@ -5723,7 +5849,9 @@ SelectRep4RCReop <- ComplicTable3 |> filter(
 
 ```
 
+
 <!--# Write reoperations to external sheet -->
+
 
 ```{epoxy}
 #| label:  Reoperations-Report-Rep4B-Proc1
@@ -5746,9 +5874,11 @@ SelectRep4RCReop <- ComplicTable3 |> filter(
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Index Normalised, and WORC Physical Question 3 (How much weakness do you experience in your shoulder?) is summarised below.
+
 
 ```{r}
 #| label: fig-PROMsRep4
@@ -5767,8 +5897,6 @@ geom_boxplot()
 Rep4RCPROM1 / Rep4RCPROM2 / Rep4RCPROM3
 
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep4RC5
@@ -5799,8 +5927,6 @@ gtsummary::as_flex_table(TableRep4RC5) |> flextable::set_table_properties(
 )
 ```
 
-
-
 ```{r}
 #| label: tbl-TableRep4RC6
 #| tbl-cap: "Summary of PRULO Report 4 (Rotator Cuff) Cases - Western Ontario Rotator Cuff Index"
@@ -5829,11 +5955,13 @@ gtsummary::as_flex_table(TableRep4RC6) |> flextable::set_table_properties(
 )
 ```
 
+
 ## Procedure Report - Biceps Tenodesis
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 ```{r}
 #| label: tbl-TableRep4BT1
@@ -5917,9 +6045,11 @@ gtsummary::as_flex_table(TableRep4BT1) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| label: tbl-TableRep4BT2
@@ -5963,7 +6093,9 @@ gtsummary::as_flex_table(TableRep4BT2) |> flextable::set_table_properties(
 
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep4-Proc2
@@ -5971,11 +6103,13 @@ gtsummary::as_flex_table(TableRep4BT2) |> flextable::set_table_properties(
 The mean follow up duration is {round(SelectRep4BT |> ungroup() |> summarise(mean = mean(Duration))/52,1)} years, with a standard deviation of {round(SelectRep4BT |> ungroup() |> summarise(sd = sd(Duration))/52,2)} years.
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below.
 
 Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0)
 
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
+
 
 
 ```{r}
@@ -6048,9 +6182,11 @@ FailuresRep4BT <-
  )}
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events as confirmed by the surgeons are summarised below.
+
 
 
 ```{r}
@@ -6184,7 +6320,9 @@ SelectRep4BTReop <- ComplicTable3 |> filter(
 
 ```
 
+
 <!--# Write reoperations to external sheet -->
+
 
 ```{epoxy}
 #| label:  Reoperations-Report-Rep4B-Proc2
@@ -6201,9 +6339,11 @@ SelectRep4BTReop <- ComplicTable3 |> filter(
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Normalised, and WORC Physical Q3 is summarised below.
+
 
 ```{r}
 #| label: fig-PROMsRep4BT
@@ -6224,8 +6364,6 @@ geom_boxplot()
 Rep4BTPROM1 / Rep4BTPROM2 / Rep4BTPROM3
 
 ```
-
-
 
 ```{r}
 #| label: tbl-PROMsRep4BT1
@@ -6255,7 +6393,6 @@ gtsummary::as_flex_table(TableRep4BT5) |> flextable::set_table_properties(
     )
 )
 ```
-
 
 ```{r}
 #| label: tbl-PROMsRep4BT2
@@ -6287,11 +6424,13 @@ gtsummary::as_flex_table(TableRep4BT6) |> flextable::set_table_properties(
 )
 ```
 
+
 # Product Report 5 - Milagro Advance BR
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label:  Reference-Code-Rep5
@@ -6398,9 +6537,11 @@ SelectRep5BTPROM1<- SelectRep5PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodes
 SelectRep5BTPROM2<- SelectRep5PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label:  Overview-Rep5
@@ -6437,11 +6578,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 ## Procedure Report - Rotator Cuff Repair
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -6526,9 +6669,11 @@ gtsummary::as_flex_table(TableRep5RC1) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| eval: false
@@ -6536,7 +6681,9 @@ Surgical findings and management strategies are summarised below.
 CuffStatus2 <- SelectRep5RC |> filter(is.na(CuffStatus))
 ```
 
+
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
+
 
 ```{r}
 #| label: tbl-TableRep5RC2
@@ -6585,7 +6732,9 @@ gtsummary::as_flex_table(TableRep5RC2) |> flextable::set_table_properties(
 
 
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep5-Proc1
@@ -6594,7 +6743,9 @@ The mean follow up duration is {round(SelectRep5RC |> ungroup() |> summarise(mea
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 
 ```{r}
@@ -6672,9 +6823,11 @@ FailuresRep5RC <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label:  Complication-Other-Rep5
@@ -6687,7 +6840,6 @@ SelectRep5Other <- SelectRep5 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-TableRep5RC4
@@ -6824,7 +6976,9 @@ SelectRep5RCReop <- ComplicTable3 |> filter(
 
 ```
 
+
 <!--# Write reoperations to external sheet -->
+
 
 ```{epoxy}
 #| label:  Reoperations-Report-Rep5B-Proc1
@@ -6846,9 +7000,11 @@ SelectRep5RCReop <- ComplicTable3 |> filter(
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Index Normalised, and WORC Physical Question 3 (How much weakness do you experience in your shoulder?) is summarised below.
+
 
 ```{r}
 #| label: fig-PROMsRep5RC
@@ -6868,7 +7024,6 @@ geom_boxplot()
 Rep5RCPROM1 / Rep5RCPROM2 / Rep5RCPROM3
 
 ```
-
 
 ```{r}
 #| label: tbl-TableRep5RC5
@@ -6899,7 +7054,6 @@ gtsummary::as_flex_table(TableRep5RC5) |> flextable::set_table_properties(
 )
 
 ```
-
 
 ```{r}
 #| label: tbl-TableRep5RC6
@@ -6932,11 +7086,13 @@ gtsummary::as_flex_table(TableRep5RC6) |> flextable::set_table_properties(
 )
 ```
 
+
 ## Procedure Report - Biceps Tenodesis
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 ```{r}
 #| label: tbl-TableRep5BT1
@@ -7021,9 +7177,11 @@ gtsummary::as_flex_table(TableRep5BT1) |> flextable::set_table_properties(
 
 
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| label: tbl-TableRep5BT2
@@ -7069,7 +7227,9 @@ gtsummary::as_flex_table(TableRep5BT2) |> flextable::set_table_properties(
 ```
 
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep5-Proc2
@@ -7077,11 +7237,13 @@ gtsummary::as_flex_table(TableRep5BT2) |> flextable::set_table_properties(
 The mean follow up duration is {round(SelectRep5BT |> ungroup() |> summarise(mean = mean(Duration))/52,1)} years, with a standard deviation of {round(SelectRep5BT |> ungroup() |> summarise(sd = sd(Duration))/52,2)} years.
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below.
 
 Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0)
 
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
+
 
 
 ```{r}
@@ -7156,9 +7318,11 @@ FailuresRep5BT <-
  )}
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events as confirmed by the surgeons are summarised below.
+
 
 
 ```{r}
@@ -7293,7 +7457,9 @@ SelectRep5BTReop <- ComplicTable3 |> filter(
 
 ```
 
+
 <!--# Write reoperations to external sheet -->
+
 
 ```{epoxy}
 #| label:  Reoperations-Report-Rep5B-Proc2
@@ -7310,9 +7476,11 @@ SelectRep5BTReop <- ComplicTable3 |> filter(
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Normalised, and WORC Physical Q3 is summarised below.
+
 
 ```{r}
 #| label: fig-PROMRep5BT
@@ -7331,7 +7499,6 @@ geom_boxplot()
 Rep5BTPROM1 / Rep5BTPROM2 / Rep5BTPROM3
 
 ```
-
 
 ```{r}
 #| label: tbl-TableRep5BT5
@@ -7363,7 +7530,6 @@ gtsummary::as_flex_table(TableRep5BT5) |> flextable::set_table_properties(
 )
 ```
 
-
 ```{r}
 #| label: tbl-TableRep5BT6
 #| tbl-cap: "Summary of PRULO Report 5 (Biceps Tenodesis) Cases - WORC Normalised"
@@ -7394,11 +7560,13 @@ gtsummary::as_flex_table(TableRep5BT6) |> flextable::set_table_properties(
 )
 ```
 
+
 # Product Report 6 - Gryphon ProKnot BR
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label:  Reference-Code-Rep6
@@ -7503,9 +7671,11 @@ SelectRep6SLAPPROM1<- SelectRep6PROM1 |> filter(LabrumRepair == "SLAP")
 
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label:  Overview-Rep6
@@ -7546,11 +7716,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 ## Procedure Report - All
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -7635,9 +7807,11 @@ gtsummary::as_flex_table(TableRep61) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| label: tbl-TableRep62
@@ -7678,7 +7852,9 @@ gtsummary::as_flex_table(TableRep62) |> flextable::set_table_properties(
 )
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep6-Proc1
@@ -7688,7 +7864,9 @@ The mean follow up duration is {round(SelectRep6 |> ungroup() |> summarise(mean 
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit).
+
 
 
 ```{r}
@@ -7766,9 +7944,11 @@ FailuresRep6 <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit).
+
 
 ```{r}
 #| label:  Complication-Other-Rep6
@@ -7782,8 +7962,6 @@ SelectRep6Other <- SelectRep6 |> filter(
   Cohort
 )
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep64
@@ -7917,7 +8095,9 @@ SelectRep6Reop <- ComplicTable3 |> filter(
 
 ```
 
+
 Write reoperations to external sheet
+
 
 ```{epoxy}
 #| label: Reoperations-Report-Rep6B-Proc1
@@ -7939,9 +8119,11 @@ Write reoperations to external sheet
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH and WOSI Index Normalised is summarised below.
+
 
 ```{r}
 #| label: fig-PROMRep6
@@ -7957,8 +8139,6 @@ geom_boxplot()
 Rep6PROM1 / Rep6PROM2
 
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep65
@@ -7995,11 +8175,13 @@ gtsummary::as_flex_table(TableRep65) |> flextable::set_table_properties(
 
 ```
 
+
 ## Procedure Report - Bankart Repair
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -8084,9 +8266,11 @@ gtsummary::as_flex_table(TableRep6BR1) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| label: tbl-TableRep6BR2
@@ -8132,7 +8316,9 @@ gtsummary::as_flex_table(TableRep6BR2) |> flextable::set_table_properties(
 
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep6BR-Proc2
@@ -8141,7 +8327,9 @@ The mean follow up duration is {round(SelectRep6BR |> ungroup() |> summarise(mea
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit).
+
 
 
 ```{r}
@@ -8167,8 +8355,6 @@ gtsummary::as_flex_table(TableRep6BR3) |> flextable::set_table_properties(
 )
 
 ```
-
-
 
 ```{r}
 #| label:  Failure-Report-Rep6BRA-Proc2
@@ -8220,9 +8406,11 @@ FailuresRep6BR <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label:  Complication-Other-Rep6BR
@@ -8236,8 +8424,6 @@ SelectRep6BROther <- SelectRep6BR |> filter(
   Cohort
 )
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep6BR4
@@ -8310,8 +8496,6 @@ gtsummary::as_flex_table(TableRep6BR4) |> flextable::set_table_properties(
 
 ```
 
-
-
 ```{r}
 #| label:  Reoperations-Report-Rep6BRA-Proc2
 
@@ -8374,7 +8558,9 @@ SelectRep6BRReop <- ComplicTable3 |> filter(
 
 ```
 
+
 Write reoperations to external sheet
+
 
 ```{epoxy}
 #| label: Reoperations-Report-Rep6BRB-Proc2
@@ -8396,9 +8582,11 @@ Write reoperations to external sheet
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QuickDASH and WOSI Index Normalised are summarised below.
+
 
 ```{r}
 #| label: fig-PROMRep6BR
@@ -8414,8 +8602,6 @@ geom_boxplot()
 Rep6PROM1 / Rep6PROM2
 
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep6BR5
@@ -8453,11 +8639,13 @@ gtsummary::as_flex_table(TableRep6BR5) |> flextable::set_table_properties(
 
 
 
+
 # Product Report 7 - Gryphon BR with Orthocord
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label: Reference-Code-Rep7
@@ -8563,9 +8751,11 @@ SelectRep7SLAPPROM1<- SelectRep7PROM1 |> filter(LabrumRepair == "SLAP")
 
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label:  Overview-Rep7
@@ -8606,11 +8796,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 ## Procedure Report - All
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -8695,9 +8887,11 @@ gtsummary::as_flex_table(TableRep71) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| label: tbl-TableRep72
@@ -8745,7 +8939,9 @@ gtsummary::as_flex_table(TableRep72) |> flextable::set_table_properties(
 
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep7-Proc1
@@ -8754,7 +8950,9 @@ The mean follow up duration is {round(SelectRep7 |> ungroup() |> summarise(mean 
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 
 ```{r}
@@ -8832,9 +9030,11 @@ FailuresRep7 <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label:  Complication-Other-Rep7
@@ -8847,7 +9047,6 @@ SelectRep7Other <- SelectRep7 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-TableRep74
@@ -8983,7 +9182,9 @@ SelectRep7Reop <- ComplicTable3 |> filter(
 
 ```
 
+
 Write reoperations to external sheet
+
 
 ```{epoxy}
 #| label:  Reoperations-Report-Rep7B-Proc1
@@ -9005,9 +9206,11 @@ Write reoperations to external sheet
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH and WOSI Index Normalised is summarised below.
+
 
 ```{r}
 #| label: fig-PROMsRep7
@@ -9024,8 +9227,6 @@ geom_boxplot()
 Rep7PROM1 / Rep7PROM2
 
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep75
@@ -9062,11 +9263,13 @@ gtsummary::as_flex_table(TableRep75) |> flextable::set_table_properties(
 
 ```
 
+
 ## Procedure Report - Bankart Repair
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -9149,9 +9352,11 @@ gtsummary::as_flex_table(TableRep7BR1) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| label: tbl-TableRep7BR2
@@ -9198,7 +9403,9 @@ gtsummary::as_flex_table(TableRep7BR2) |> flextable::set_table_properties(
 
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label:  Duration-Rep7BR-Proc2
@@ -9207,7 +9414,9 @@ The mean follow up duration is {round(SelectRep7BR |> ungroup() |> summarise(mea
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 
 ```{r}
@@ -9284,9 +9493,11 @@ FailuresRep7BR <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label: Complication-Other-Rep7BR
@@ -9300,8 +9511,6 @@ SelectRep7BROther <- SelectRep7BR |> filter(
   Cohort
 )
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep7BR4
@@ -9435,7 +9644,9 @@ SelectRep7BRReop <- ComplicTable3 |> filter(
 
 ```
 
+
 Write reoperations to external sheet
+
 
 ```{epoxy}
 #| label: Reoperations-Report-Rep7BRB-Proc2
@@ -9457,9 +9668,11 @@ Write reoperations to external sheet
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QuickDASH and WOSI Index Normalised is summarised below.
+
 
 ```{r}
 #| label: fig-PROMsRep7BR
@@ -9475,7 +9688,6 @@ geom_boxplot()
 Rep7PROM1 / Rep7PROM2
 
 ```
-
 
 ```{r}
 #| label: tbl-TableRep7BR5
@@ -9513,11 +9725,13 @@ gtsummary::as_flex_table(TableRep7BR5) |> flextable::set_table_properties(
 
 ```
 
+
 # Product Report 8 - Gryphon BR with Dynacord
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label:  Reference-Code-Rep8
@@ -9623,9 +9837,11 @@ SelectRep8SLAPPROM1<- SelectRep8PROM1 |> filter(LabrumRepair == "SLAP")
 
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label: Overview-Rep8
@@ -9661,11 +9877,13 @@ Usage of the Product within the patient group is summarised below.
 
 
 
+
 # Product Report 9 - Gryphon PEEK with Dynacord
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label: Reference-Code-Rep9 
@@ -9768,9 +9986,11 @@ SelectRep9BRPROM1 <- SelectRep9PROM1 |> filter(LabrumRepair == "Bankart")
 
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label: Overview-Rep9
@@ -9804,11 +10024,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 # Product Report 10 - Latarjet Screw
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label: Reference-Code-Rep10 
@@ -9901,9 +10123,11 @@ SelectRep10PROM1 <- SnapshotPROM1 |>
 
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label: Overview-Rep10 
@@ -9930,11 +10154,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 ## Procedure Report - All
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -10019,9 +10245,11 @@ gtsummary::as_flex_table(TableRep101) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| label: tbl-TableRep102
@@ -10075,7 +10303,9 @@ gtsummary::as_flex_table(TableRep102) |> flextable::set_table_properties(
 
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label: Duration-Rep10-Proc1
@@ -10084,7 +10314,9 @@ The mean follow up duration is {round(SelectRep10 |> ungroup() |> summarise(mean
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 
 ```{r}
@@ -10162,9 +10394,11 @@ FailuresRep10 <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label: Complication-Other-Rep10 
@@ -10176,7 +10410,6 @@ SelectRep10Other <- SelectRep10 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-TableRep104
@@ -10315,7 +10548,9 @@ SelectRep10Reop <- ComplicTable3 |> filter(
 
 ```
 
+
 Write reoperations to external sheet
+
 
 ```{epoxy}
 #| label: Reoperations-Report-Rep10B-Proc1
@@ -10337,9 +10572,11 @@ Write reoperations to external sheet
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QuickDASH and WOSI Index Normalised is summarised below.
+
 
 ```{r}
 #| label: fig-PROMsRep10
@@ -10355,8 +10592,6 @@ geom_boxplot()
 Rep10PROM1 / Rep10PROM2
 
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep105
@@ -10392,11 +10627,13 @@ gtsummary::as_flex_table(TableRep105) |> flextable::set_table_properties(
 
 ```
 
+
 # Product Report 11 - Dynacord Freestrand Suture
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label: Reference-Code-Rep11 
@@ -10506,9 +10743,11 @@ SelectRep11BTPROM1<- SelectRep11PROM1 |> filter(str_detect(LongHeadBiceps,"Tenod
 SelectRep11BTPROM2<- SelectRep11PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label: Overview-Rep11
@@ -10549,11 +10788,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 ## Procedure Report - Rotator Cuff Repair
 
 ### Patient Characteristics
 
 Patient demographic, pathology, and treatment characteristics for this cohort receiving the Product are summarised below.
+
 
 
 ```{r}
@@ -10638,9 +10879,11 @@ gtsummary::as_flex_table(TableRep11RC1) |> flextable::set_table_properties(
 
 ```
 
+
 ### Surgical Details
 
 Surgical findings and management strategies are summarised below.
+
 
 ```{r}
 #| eval: false
@@ -10648,7 +10891,9 @@ Surgical findings and management strategies are summarised below.
 CuffStatus2 <- SelectRep11RC |> filter(is.na(CuffStatus))
 ```
 
+
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
+
 
 ```{r}
 #| label: tbl-TableRep11RC2
@@ -10693,7 +10938,9 @@ gtsummary::as_flex_table(TableRep11RC2) |> flextable::set_table_properties(
 
 ```
 
+
 ### Treatment Survival
+
 
 ```{epoxy}
 #| label: Duration-Rep11-Proc1
@@ -10702,7 +10949,9 @@ The mean follow up duration is {round(SelectRep11RC |> ungroup() |> summarise(me
 
 ```
 
+
 Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 
 ```{r}
@@ -10779,9 +11028,11 @@ FailuresRep11RC <-
 
 ```
 
+
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
 
 ```{r}
 #| label: Complication-Other-Rep11
@@ -10794,8 +11045,6 @@ SelectRep11Other <- SelectRep11 |> filter(
   Cohort
 )
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep11RC4
@@ -10932,7 +11181,9 @@ SelectRep11RCReop <- ComplicTable3 |> filter(
 
 ```
 
+
 Write reoperations to external sheet
+
 
 ```{r}
 #| label: Reoperations-Report-Rep11B-Proc1
@@ -10954,9 +11205,11 @@ Write reoperations to external sheet
 
 ```
 
+
 ### Patient-Reported Outcomes
 
 Complete case analysis of QDASH, WORC Index Normalised, and WORC Physical Question 3 (How much weakness do you experience in your shoulder?) is summarised below.
+
 
 ```{r}
 #| label: fig-PROMsRep11
@@ -10975,8 +11228,6 @@ geom_boxplot()
 Rep11RCPROM1 / Rep11RCPROM2 / Rep11RCPROM3
 
 ```
-
-
 
 ```{r}
 #| label: tbl-TableRep11RC5
@@ -11008,8 +11259,6 @@ tbl_summary(by = "Timepoint",
     )
 ```
 
-
-
 ```{r}
 #| label: tbl-TableRep11RC6
 #| tbl-cap: "Summary of PRULO Report 11 (Rotator Cuff) Cases - WORC Normalised and WORC Physical Question 3."
@@ -11039,11 +11288,13 @@ tbl_summary(by = "Timepoint",
 
 ```
 
+
 # Product Report 12 - Dynatape Freestrand Suture
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label: Reference-Code-Rep12
@@ -11149,9 +11400,11 @@ SelectRep12RCPROM1 <- SelectRep12PROM1 |> filter(str_detect(CuffRepair,"Repair")
 SelectRep12RCPROM2 <- SelectRep12PROM2 |> filter(str_detect(CuffRepair,"Repair"))
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label: Overview-Rep12
@@ -11187,11 +11440,13 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+
 # Product Report 13 - Orthocord Freestrand Suture
 
 ## Sample Selection
 
 The sample of patients with the relevant product group were identified and data were retrieved for analysis by matching registry records to the relevant stock keeping units (SKUs) for the product group of interest. Usage statistics for the product group were added, and adverse events data were attached. Patient-reported data were retrieved and the dataset was manipulated to include relevant details for procedures of interest.
+
 
 ```{r}
 #| label: Reference-Code-Rep13
@@ -11288,9 +11543,11 @@ SelectRep13PROM2 <- SnapshotPROM2 |>
 
 ```
 
+
 ## Overview
 
 Usage of the Product within the patient group is summarised below.
+
 
 ```{epoxy}
 #| label: Overview-Rep13
@@ -11309,9 +11566,11 @@ Usage of the Product within the patient group is summarised below.
 
 
 
+
 # Product usage patterns
 
 Product usage patterns were determined by merging multiple product datasets into a single table. This combined data was then modified to include additional information and restructured to have separate columns for different product groups. Following this, a list of product category names was established and proportions for various combinations were calculated. The results were reformatted for presentation, with count data incorporated and proportions displayed as percentages.
+
 
 
 
