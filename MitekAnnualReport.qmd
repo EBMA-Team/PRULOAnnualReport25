@@ -34,8 +34,6 @@ execute:
 
 # Preamble
 
-## **Mitek Annual Report - Apr 2025**
-
 **Author:** Corey Scholes, EBM Analytics
 
 **Sponsors:** Assoc Prof Kevin Eng and Prof Richard Page, Geelong Orthopaedics; Mitek, JnJ MedTech
@@ -220,6 +218,103 @@ get_latest_snapshot <- function(base_folder_id = base_folder_id1) {
   })
 }
 ```
+
+```{r}
+# Function to generate multiple dataframe pairs from a configuration list
+Generate_selectrep <- function(config_list, ProductTable, SnapshotComb4, 
+                               ComplicInfection, ComplicLigament_Tendon, 
+                               ComplicStiffness, ComplicLoosening, ComplicHardware, 
+                               ComplicInstability, ComplicNeurological, ComplicFracture,
+                               ComplicThrombosis, ComplicEffusion, ComplicPain, 
+                               ComplicOther, ComplicIntraop, ComplicReop, ComplicTable3, 
+                               ...) {
+  
+  result_list <- list()
+  
+  for(i in seq_along(config_list)) {
+    config <- config_list[[i]]
+    df_name <- names(config_list)[i]
+    
+    # Prepare PROM arguments if specified
+    prom_args <- list()
+    if (!is.null(config$proms)) {
+      dots <- list(...)
+      for (prom_name in config$proms) {
+        if (prom_name %in% names(dots)) {
+          prom_args[[prom_name]] <- dots[[prom_name]]
+        }
+      }
+    }
+    
+    # Create the dataframe pair with subsets and PROMs
+    df_results <- do.call(create_dataframe_pair, c(
+      list(
+        df_name = df_name,
+        category = config$category,
+        search_terms = config$search_terms,
+        pattern = config$pattern,
+        subsets = config$subsets,
+        proms = config$proms,
+        ProductTable = ProductTable,
+        SnapshotComb4 = SnapshotComb4,
+        ComplicInfection = ComplicInfection,
+        ComplicLigament_Tendon = ComplicLigament_Tendon,
+        ComplicStiffness = ComplicStiffness,
+        ComplicLoosening = ComplicLoosening,
+        ComplicHardware = ComplicHardware,
+        ComplicInstability = ComplicInstability,
+        ComplicNeurological = ComplicNeurological,
+        ComplicFracture = ComplicFracture,
+        ComplicThrombosis = ComplicThrombosis,
+        ComplicEffusion = ComplicEffusion,
+        ComplicPain = ComplicPain,
+        ComplicOther = ComplicOther,
+        ComplicIntraop = ComplicIntraop,
+        ComplicReop = ComplicReop,
+        ComplicTable3 = ComplicTable3
+      ),
+      prom_args
+    ))
+    
+    # Store main dataframes
+    result_list[[paste0("RefCode", i)]] <- df_results$RefCode
+    result_list[[paste0("SelectRep", i)]] <- df_results$SelectRep
+    
+    # Store PROMs
+    if (!is.null(config$proms)) {
+      for (prom_name in config$proms) {
+        if (prom_name %in% names(df_results)) {
+          result_list[[paste0("SelectRep", i, prom_name)]] <- df_results[[prom_name]]
+        }
+      }
+    }
+    
+    # Store subsets with appropriate naming
+    if (!is.null(config$subsets)) {
+      for (subset_name in names(config$subsets)) {
+        # Main subset
+        if (subset_name %in% names(df_results)) {
+          result_list[[paste0("SelectRep", i, subset_name)]] <- df_results[[subset_name]]
+        }
+        
+        # PROM subsets
+        if (!is.null(config$proms)) {
+          for (prom_name in config$proms) {
+            prom_subset_name <- paste0(subset_name, prom_name)
+            if (prom_subset_name %in% names(df_results)) {
+              result_list[[paste0("SelectRep", i, prom_subset_name)]] <- df_results[[prom_subset_name]]
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return(result_list)
+}
+```
+
+
 
 ## Import Inputs
 
@@ -458,12 +553,7 @@ SnapshotComb <- SnapshotRC |> dplyr::select(-(c(ExternalStudyTag,Email,Phone))) 
 Procedure data was combined from all cohorts. New columns were created based on conditional statements, cases were filtered where procedure data was unavailable (non-surgical, missing intraoperative data). Procedure data was further processed to standardise labels, categorised by structure (Rotator Cuff, Labrum, Capsule and Ligament) and adjunct procedures reorganised to account for variation across surgical indication.
 
 ```{r}
-
-# This code chunk creates a new column in the 'SnapshotComb' dataframe
-# It uses the 'mutate' function from the dplyr package to create three new columns:
-#   - CuffRepair2: a character variable that contains the description of rotator cuff repair
-#   - TreatmentGlenoid2: a character variable that contains the treatment for glenoid (shoulder socket)
-#   - AdjunctProcedures2: a character variable that contains any additional procedures performed
+#| label: snapshot-comb1
 
 SnapshotComb1  <- SnapshotComb |> 
   # Use 'case_when' function to create CuffRepair2 column
@@ -952,7 +1042,7 @@ SnapshotComb1a <- left_join(
 
 ## Adjust dataset for time to event
 
-To account for variations in follow up, time to event was calculated between date of surgery and change of record status. Treatment record end was defined as any change in state such that the treatment would be considered no longer active, has not achieved its clinical purpose or is no longer relevant. For example, in the case of soft tissue repair, if the target tissue represents with a retear, or the construct presents in a state such that hardware removal or replacement is recommended, then the treatment record status is to inactive and a new treatment record is created to capture the subsequent treatment. The treatments with inactive statuses were extracted to a shared file for review. The subsequent treatment was manually labelled to create the *Subsequent Treatment* variable.
+To account for variations in follow up, time to event was calculated between date of surgery and change of record status. Treatment record end was defined as any change in state such that the treatment would be considered no longer active, has not achieved its clinical purpose or is no longer relevant. For example, in the case of soft tissue repair, if the target tissue represents with a retear, or the construct presents in a state such that hardware removal or replacement is recommended, then the treatment record status is set to inactive and a new treatment record is created to capture the subsequent treatment. The treatments with inactive statuses were extracted to a shared file for review. The subsequent treatment was manually labelled to create the *Subsequent Treatment* variable.
 
 Additional numeric variables were calculated from inputs collected within the registry (e.g. Symptom Duration).
 
@@ -997,7 +1087,7 @@ SnapshotCombFail <- SnapshotComb2 |> dplyr::filter(
   SurgicalTreatment == "Surgical"
 )
 
-googlesheets4::range_write(
+with_gs4_quiet(googlesheets4::range_write(
   ss = SheetIDs$AuditResults,
   data = SnapshotCombFail |> dplyr::select(
     TreatmentID,
@@ -1013,6 +1103,7 @@ googlesheets4::range_write(
   sheet = "Failures",
   range = "A1:G",
   col_names = TRUE
+)
 )
 ```
 
@@ -1067,7 +1158,13 @@ SnapshotComb2a <- left_join(
     str_detect(SubsequentTx,"ROH") ~ str_replace_all(SubsequentTx,"ROH","Removal of Hardware"),
     str_detect(SubsequentTx,"Non-op") ~ "Nonoperative Management",
     .default = stringr::str_to_title(SubsequentTx)
-  )
+  ),
+    ReoperationProcedure2 = case_when(
+      is.na(ReoperationProcedure) & (SubsequentTx2 == "Nonoperative Management" | SubsequentTx2 == "Not Applicable")  ~ "No",
+      is.na(ReoperationProcedure) & !(SubsequentTx2 == "Nonoperative Management" | SubsequentTx2 == "Not Applicable") ~ "Yes",
+      ReoperationProcedure == "No" & !(SubsequentTx2 == "Nonoperative Management" | SubsequentTx2 == "Not Applicable") ~ "Yes",
+      .default = ReoperationProcedure
+    )
 )
 ```
 
@@ -1077,279 +1174,12 @@ SnapshotCombCheck <- SnapshotComb2a |> dplyr::select(
   Cohort,
   TreatmentStatus,
   TreatmentStatusNotes,
-  ReoperationProcedure,
+  ReoperationProcedure2,
   SubsequentTx
 )
 ```
 
-## Prepare adverse events
 
-Adverse events were monitored by near real-time chart review and surgical bookings. Events were added to the registry using an electronic form and linked to the treatment records. The data import was assessed for data entry validity, differences between date of event, date of reoperation and surgery date of the index treatment were calculated to assess date validity. Additional data preparation and cleaning was performed, which included filtering and standardizing key identifiers across multiple datasets. Missing values were identified to ensure data consistency. The adverse events were attached to the treatment data with filters applied to constrain to pertinent records and time periods. Time-based metrics were calculated and classification was performed based on the event descriptions using regular expressions. Finally, it conducted data quality checks, identifying potential discrepancies and duplicate entries. After the data transformation, the revised dataset was exported to an external file for review. The code then generated multiple subset datasets, each focusing on a specific type of complication and isolating the earliest occurrence for each unique treatment. This was used for retrieval for each product report.
-
-```{r}
-#| label:  Complications-postop
-# Join sufficient columns to complictable to perform calculations
-
-
-# Add filter to align complications table with snapshot with CurrentDate
-ComplicTable1 <- ComplicTable |> dplyr::filter(
-    `Date of Occurrence` < SnapshotDate
-    ) |>
-  mutate(
-    TreatmentID = trimws(`Treatment ID`)
-  )
-
-#Tidy up TreatmentID in both tables
-# Remove leading and trailing whitespaces
-
-SnapshotComb2a$TreatmentID <- trimws(SnapshotComb2a$TreatmentID)
-# Check data types
-#str(ComplicTable1$TreatmentID)
-#str(SnapshotComb2$TreatmentID)
-
-#str(SnapshotComb2$DateTreatment)
-
-# Check for NAs in ComplicTable1
-na_in_ComplicTable1 <- sum(is.na(ComplicTable1$TreatmentID))
-
-
-# Check for NAs in SnapshotMerge2
-na_in_SnapshotComb2a <- sum(is.na(SnapshotComb2a$TreatmentID))
-
-```
-
-```{r}
-#| label:  Complications-intraop
-# Slice out intraoperative complications (explants)
-# 
-# 
-IntraopComp <- SnapshotComb2a |> dplyr::select(
-  TreatmentID,
-  CombID,
-  DateTreatment,
-  SurgicalTreatment,
-  TreatmentStatus,
-  ICCount:ICIntervention
-) |> filter(
-  !is.na(ICCount)
-)
-
-```
-
-```{epoxy}
-#| eval: false
-
-There are {nrow(SnapshotComb2a |> filter(is.na(TreatmentID)))} cases with missing TreatmentID in the dataset and {nrow(ComplicTable1 |> filter(is.na(TreatmentID)))} missing in the complications table.
-
-```
-
-<!--# Clean up live tables for complications. Assess date validity and correct data entry. -->
-
-```{r}
-mismatched_rows <- ComplicTable1[!(ComplicTable1$TreatmentID %in% SnapshotComb2$TreatmentID), ]
-
-# Remove non-matching rows from ComplicTable2
-ComplicTable2 <- ComplicTable1 |>
-  filter(!(TreatmentID %in% mismatched_rows$TreatmentID))
-```
-
-```{r}
-# Join in key data from Snapshot table to calculate additional columns
-ComplicTable3 <- left_join(
-  ComplicTable2,
-  SnapshotComb2a |> dplyr::select(
-  TreatmentID,
-  DateStatusChange
-  ),
-  by = "TreatmentID"
-) |> left_join(
-    SnapshotComb2a |> dplyr::select(
-    TreatmentID,
-    DateTreatment), 
-  by = "TreatmentID") |> 
-  filter(
-    !is.na(DateTreatment) & `Complication Occurrence` != "No"
-  ) |>
-  mutate(
-    DateOccurFix = ymd(`Date of Occurrence`),
-  ) |>
-mutate(
-  EventDelay = as.numeric(as.duration(interval(ymd(DateTreatment), ymd(DateOccurFix))),"weeks"), # Mitek would like this in years - may need to change over once intiial review is complete
-  ReopDelay_Surgery = as.numeric(difftime(`Reoperation Procedure Date`,DateTreatment,units = "weeks")),
-  ReopDelay_Occur = as.numeric(difftime(`Reoperation Procedure Date`,DateOccurFix,units = "weeks")),
-  )  |>
-  mutate(
-    Intraop = case_when(
-      ReopDelay_Surgery <1 | stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"intraop*") ~ "Yes",
-      (ReopDelay_Surgery >=1 & !is.na(ReopDelay_Surgery)) | stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"intraop*", negate = TRUE) ~ "No"
-    ),
-DateCheck = case_when(
-  `Date of Occurrence` < DateTreatment ~ "Check",
-  .default = "OK"
-),
-  Infection = case_when(
-    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"washout|infect|antibiotic*|vac.*dress*|culture") ~ "Yes", #added "culture" as term for Infection
-    .default = "No",
-  ),
-  Ligament_Tendon = case_when(
-    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"fail|recurrent|rupture|retear|.*torn|weak|weakness|tear") ~ "Yes", #removed enthesopathy, as those kind of connective tissue pathologies will make it difficult to distinguish from retears in this framework - pushed to Other. 
-    .default = "No"
-    ),
-  Stiffness = case_when(
-    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"capsulitis|frozen|stiff*|release|arthrofib*") ~ "Yes", #removed "carpal tunnel release" as a term for "Stiffness" as it was previously overlapping with other types of releases
-    .default = "No"
-    ),
-  Loosening = case_when(
-   stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"regraft*|loos(?!e\\sbodies)|pullout") ~ "Yes",
-    .default = "No"
-    ),
-  Hardware = case_when(
-   stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"remov*|irritat*|explant*|broke*|annoy*|device|replac*") ~ "Yes", 
-   .default = "No"
-  ),
-  Instability = case_when(stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"instab*|sublux*|disloc*") ~ "Yes",
-    .default = "No"
-  ),
-  Neurological = case_when(
-    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"palsy|radiculopathy|carpal\\s+tunnel") ~ "Yes", #added carpal tunnel compression or release as a potential neurological condition
-    .default = "No"
-  ),
-  Fracture = case_when(
-    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"fract*") ~ "Yes",
-    .default = "No"
-  ),
-  Wound = case_when(
-    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"wound|necro*") ~ "Yes",
-    .default = "No"
-  ),
-  Thrombosis = case_when(
-    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"dvt|embo*|\\bpe\\b|occlus*") ~ "Yes",
-    .default = "No"
-  ),
-  Effusion = case_when(
-    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"swell*|edema|oedema|effus*|swollen") ~ "Yes",
-    .default = "No"
-  ),
-  Pain = case_when(
-    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"pain|complex|crps") ~ "Yes", #previously had word boundary - but got excluded when hard up against ";" so removed word boundaries
-    .default = "No"
-  )
-) |>
-  rowwise() |>
-  mutate(
-    Other = case_when(
-      any(str_detect(c_across(Infection:Pain),"Yes")) ~ "No",
-      .default = "Yes"
-    ),
-    PainIsol = case_when(
-      any(str_detect(c_across(Infection:Effusion),"Yes")) | Other == "Yes" ~ "No",
-      all(str_detect(c_across(Infection:Effusion),"No")) & Other == "No" & Pain == "Yes" ~ "Yes",
-      .default = NA_character_
-    )
-  )
-```
-
-```{r}
-
-ComplicFailCheck <- ComplicTable3 |> filter(
-  !is.na(DateStatusChange)
-) |> mutate(
-  StatusDiff = ymd(DateStatusChange) - ymd(`Date of Occurrence`)
-) |> relocate(
-  StatusDiff,
-  .after = DateStatusChange
-) |> group_by(
-  TreatmentID
-) |> slice_max(
-  `Date of Occurrence`
-)
-
-```
-
-```{r}
-#| label: Write-complications
-#| eval: false
-
-
-googlesheets4::range_write(
-  ss = SheetIDs$AuditResults,
-  data = ComplicTable3,
-  sheet = "ComplicTable",
-  range = "A1:AE",
-  col_names = TRUE
-)
-```
-
-Split out into arrays to bounce against for each Product report
-
-```{r}
-
-ComplicInfection <- ComplicTable3 |> dplyr::group_by(TreatmentID) |> filter(Infection == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicLigament_Tendon <- ComplicTable3 |> group_by(TreatmentID) |> filter(Ligament_Tendon == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicStiffness <- ComplicTable3 |> group_by(TreatmentID) |> filter(Stiffness == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicLoosening <- ComplicTable3 |> group_by(TreatmentID) |> filter(Loosening == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicHardware <- ComplicTable3 |> group_by(TreatmentID) |> filter(Hardware == "Yes" & Loosening == "No") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicInstability <- ComplicTable3 |> group_by(TreatmentID) |> filter(Instability == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicNeurological <- ComplicTable3 |> group_by(TreatmentID) |> filter(Neurological == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicFracture <- ComplicTable3 |> group_by(TreatmentID) |> filter(Fracture == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicThrombosis <- ComplicTable3 |> group_by(TreatmentID) |> filter(Thrombosis == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicEffusion <- ComplicTable3 |> group_by(TreatmentID) |> filter(Effusion == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicPain <- ComplicTable3 |> group_by(TreatmentID) |> filter(PainIsol == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicOther <- ComplicTable3 |> group_by(TreatmentID) |> filter(Other == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicReop <- ComplicTable3 |> group_by(TreatmentID) |> filter(`Reoperation Procedure` == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicIntraop <- ComplicTable3 |> group_by(TreatmentID) |> filter(Intraop == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-
-```
-
-<!--# Review intraoperative complications manually for mechanism -->
-
-Intraoperative complications were reviewed manually for mechanism.
-
-```{r}
-#| label: Complication-discrepancies
-#| eval: false
-
-ComplicDiscrep <- ComplicTable3 |> filter(
-  DateCheck == "Check"|
-    is.na(`Complication Nature`)|
-    (`Reoperation Procedure` == "Yes" & `Complication Occurrence` == "No")
-)
-
-#Identify duplicate entries
-ComplicDiscrep2 <- ComplicTable3 |>
-  group_by(TreatmentID, DateOccurFix) |>
-  filter(n() > 1)
-
-# Identify the problematic codes that are not linking back to the ProductTable correctly
-
-googlesheets4::range_write(
-  ss = SheetIDs$AuditResults,
-  data = bind_rows(ComplicDiscrep,ComplicDiscrep2) |> arrange(TreatmentID),
-  sheet = "ComplicDiscrepancy",
-  range = "A1:AD",
-  col_names = TRUE
-)
-
-
-```
-
-```{r}
-#| label: Complications-missing
-#| eval: false
-
-# Comment out after first use
- # range_write(ComplicTable4,
- #             ss = "https://docs.google.com/spreadsheets/d/1e7431oSrK9tItiSZb4wCWPI7nqGqawH8pNgnqgHPNkU/edit",
- #             sheet = "ComplicDiscrepancy2",
- #             range = "A1:AC")
-
- range_write(SnapshotComb2a |>
-               filter(SurgicalTreatment == "Surgical" & is.na(ComplicationOccurrence)) |>
-               dplyr::select(TreatmentID,DateTreatment),
-             ss = SheetIDs$AuditResults,
-             sheet = "ComplicMissing",
-            range = "A1:C")
-```
 
 ## Prepare product groups of interest
 
@@ -1392,7 +1222,7 @@ ProductUsage2b <-ProductUsage2 |> filter(
 
 ```
 
-```{r}
+```{epoxy}
 #| label: Product-tracking-1
 #| eval: true
 
@@ -1402,14 +1232,16 @@ ProductUsage2b <-ProductUsage2 |> filter(
 
 {ifelse(nrow(ProductUsage2b |> filter(is.na(Description)) |> arrange(ImplantCodes)) < 1,
         epoxy::epoxy("There are no cases to flag for discrepancies."),
-        googlesheets4::range_write(
+        with_gs4_quiet(googlesheets4::range_write(
           ss = SheetIDs$AuditReport,
           data = ProductUsage2b |> filter(is.na(Description)) |> arrange(ImplantCodes),
           sheet = "ImplantTracking",
           range = "A1:D",
           col_names = TRUE
         )
-)}
+        )
+)
+  }
 
 
 
@@ -1628,6 +1460,285 @@ SnapshotPROM2 <- SnapshotPROM |>
     ) |> filter(!is.na(Eligible))
 
 ```
+
+
+## Prepare adverse events
+
+Adverse events were monitored by near real-time chart review and surgical bookings. Events were added to the registry using an electronic form and linked to the treatment records. The data import was assessed for data entry validity, differences between date of event, date of reoperation and surgery date of the index treatment were calculated to assess date validity. Additional data preparation and cleaning was performed, which included filtering and standardizing key identifiers across multiple datasets. Missing values were identified to ensure data consistency. The adverse events were attached to the treatment data with filters applied to constrain to pertinent records and time periods. Time-based metrics were calculated and classification was performed based on the event descriptions using regular expressions. Finally, it conducted data quality checks, identifying potential discrepancies and duplicate entries. After the data transformation, the revised dataset was exported to an external file for review. The code then generated multiple subset datasets, each focusing on a specific type of complication and isolating the earliest occurrence for each unique treatment. This was used for retrieval for each product report.
+
+
+```{r}
+#| label:  Complications-intraop
+# Slice out intraoperative complications (explants)
+# 
+# 
+IntraopComp <- SnapshotComb4 |> dplyr::select(
+  TreatmentID,
+  CombID,
+  DateTreatment,
+  SurgicalTreatment,
+  TreatmentStatus,
+  ICCount:ICIntervention
+) |> filter(
+  !is.na(ICCount)
+) |> mutate(
+  ICNature2 = if_else(
+    stringr::str_detect(ICNature,"explant"),
+    "Hardware explantation",
+    ICNature
+  )
+)
+
+```
+
+
+
+
+
+```{r}
+#| label:  Complications-postop
+# Join sufficient columns to complictable to perform calculations
+
+
+# Add filter to align complications table with snapshot with CurrentDate
+ComplicTable1 <- ComplicTable |> dplyr::filter(
+    `Date of Occurrence` < SnapshotDate
+    ) |>
+  mutate(
+    TreatmentID = trimws(`Treatment ID`)
+  )
+
+#Tidy up TreatmentID in both tables
+# Remove leading and trailing whitespaces
+
+SnapshotComb2a$TreatmentID <- trimws(SnapshotComb2a$TreatmentID)
+# Check data types
+#str(ComplicTable1$TreatmentID)
+#str(SnapshotComb2$TreatmentID)
+
+#str(SnapshotComb2$DateTreatment)
+
+# Check for NAs in ComplicTable1
+na_in_ComplicTable1 <- sum(is.na(ComplicTable1$TreatmentID))
+
+
+# Check for NAs in SnapshotMerge2
+na_in_SnapshotComb2a <- sum(is.na(SnapshotComb2a$TreatmentID))
+
+```
+
+
+
+```{epoxy}
+#| eval: false
+
+There are {nrow(SnapshotComb2a |> filter(is.na(TreatmentID)))} cases with missing TreatmentID in the dataset and {nrow(ComplicTable1 |> filter(is.na(TreatmentID)))} missing in the complications table.
+
+```
+
+<!--# Clean up live tables for complications. Assess date validity and correct data entry. -->
+
+```{r}
+mismatched_rows <- ComplicTable1[!(ComplicTable1$TreatmentID %in% SnapshotComb2$TreatmentID), ]
+
+# Remove non-matching rows from ComplicTable2
+ComplicTable2 <- ComplicTable1 |>
+  filter(!(TreatmentID %in% mismatched_rows$TreatmentID))
+```
+
+```{r}
+# Join in key data from Snapshot table to calculate additional columns
+ComplicTable3 <- left_join(
+  ComplicTable2,
+  SnapshotComb2a |> dplyr::select(
+  TreatmentID,
+  DateStatusChange,
+  DateTreatment,
+  ICCount:ICIntervention
+  ),
+  by = "TreatmentID"
+) |> 
+  filter(
+    !is.na(DateTreatment) & `Complication Occurrence` != "No"
+  ) |>
+  mutate(
+    DateOccurFix = ymd(`Date of Occurrence`),
+  ) |>
+mutate(
+  EventDelay = as.numeric(as.duration(interval(ymd(DateTreatment), ymd(DateOccurFix))),"weeks"), # Mitek would like this in years - may need to change over once intiial review is complete
+  ReopDelay_Surgery = as.numeric(difftime(`Reoperation Procedure Date`,DateTreatment,units = "weeks")),
+  ReopDelay_Occur = as.numeric(difftime(`Reoperation Procedure Date`,DateOccurFix,units = "weeks")),
+DateCheck = case_when(
+  `Date of Occurrence` < DateTreatment ~ "Check",
+  .default = "OK"
+),
+  Infection = case_when(
+    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"washout|infect|antibiotic*|vac.*dress*|culture") ~ "Yes", #added "culture" as term for Infection
+    .default = "No",
+  ),
+  Ligament_Tendon = case_when(
+    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"fail|recurrent|rupture|retear|.*torn|weak|weakness|tear") ~ "Yes", #removed enthesopathy, as those kind of connective tissue pathologies will make it difficult to distinguish from retears in this framework - pushed to Other. 
+    .default = "No"
+    ),
+  Stiffness = case_when(
+    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"capsulitis|frozen|stiff*|release|arthrofib*") ~ "Yes", #removed "carpal tunnel release" as a term for "Stiffness" as it was previously overlapping with other types of releases
+    .default = "No"
+    ),
+  Loosening = case_when(
+   stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"regraft*|loos(?!e\\sbodies)|pullout") ~ "Yes",
+    .default = "No"
+    ),
+  Hardware = case_when(
+   stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"remov*|irritat*|explant*|broke*|annoy*|device|replac*") ~ "Yes", 
+   .default = "No"
+  ),
+  Instability = case_when(stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"instab*|sublux*|disloc*") ~ "Yes",
+    .default = "No"
+  ),
+  Neurological = case_when(
+    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"palsy|radiculopathy|carpal\\s+tunnel") ~ "Yes", #added carpal tunnel compression or release as a potential neurological condition
+    .default = "No"
+  ),
+  Fracture = case_when(
+    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"fract*") ~ "Yes",
+    .default = "No"
+  ),
+  Wound = case_when(
+    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"wound|necro*") ~ "Yes",
+    .default = "No"
+  ),
+  Thrombosis = case_when(
+    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"dvt|embo*|\\bpe\\b|occlus*") ~ "Yes",
+    .default = "No"
+  ),
+  Effusion = case_when(
+    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"swell*|edema|oedema|effus*|swollen") ~ "Yes",
+    .default = "No"
+  ),
+  Pain = case_when(
+    stringr::str_detect(stringr::str_to_lower(`Complication Nature`),"pain|complex|crps") ~ "Yes", #previously had word boundary - but got excluded when hard up against ";" so removed word boundaries
+    .default = "No"
+  )
+) |>
+  rowwise() |>
+  mutate(
+    Other = case_when(
+      any(str_detect(c_across(Infection:Pain),"Yes")) ~ "No",
+      .default = "Yes"
+    ),
+    PainIsol = case_when(
+      any(str_detect(c_across(Infection:Effusion),"Yes")) | Other == "Yes" ~ "No",
+      all(str_detect(c_across(Infection:Effusion),"No")) & Other == "No" & Pain == "Yes" ~ "Yes",
+      .default = NA_character_
+    )
+  )
+```
+
+```{r}
+
+ComplicFailCheck <- ComplicTable3 |> filter(
+  !is.na(DateStatusChange)
+) |> mutate(
+  StatusDiff = ymd(DateStatusChange) - ymd(`Date of Occurrence`)
+) |> relocate(
+  StatusDiff,
+  .after = DateStatusChange
+) |> group_by(
+  TreatmentID
+) |> slice_max(
+  `Date of Occurrence`
+)
+
+```
+
+```{r}
+#| label: Write-complications
+#| eval: false
+
+
+with_gs4_quiet(googlesheets4::range_write(
+  ss = SheetIDs$AuditResults,
+  data = ComplicTable3,
+  sheet = "ComplicTable",
+  range = "A1:AF",
+  col_names = TRUE
+)
+)
+```
+
+Split out into arrays to bounce against for each Product report
+
+```{r}
+
+ComplicInfection <- ComplicTable3 |> dplyr::group_by(TreatmentID) |> filter(Infection == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicLigament_Tendon <- ComplicTable3 |> group_by(TreatmentID) |> filter(Ligament_Tendon == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicStiffness <- ComplicTable3 |> group_by(TreatmentID) |> filter(Stiffness == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicLoosening <- ComplicTable3 |> group_by(TreatmentID) |> filter(Loosening == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicHardware <- ComplicTable3 |> group_by(TreatmentID) |> filter(Hardware == "Yes" & Loosening == "No") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicInstability <- ComplicTable3 |> group_by(TreatmentID) |> filter(Instability == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicNeurological <- ComplicTable3 |> group_by(TreatmentID) |> filter(Neurological == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicFracture <- ComplicTable3 |> group_by(TreatmentID) |> filter(Fracture == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicThrombosis <- ComplicTable3 |> group_by(TreatmentID) |> filter(Thrombosis == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicEffusion <- ComplicTable3 |> group_by(TreatmentID) |> filter(Effusion == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicPain <- ComplicTable3 |> group_by(TreatmentID) |> filter(PainIsol == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicOther <- ComplicTable3 |> group_by(TreatmentID) |> filter(Other == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicReop <- ComplicTable3 |> group_by(TreatmentID) |> filter(`Reoperation Procedure` == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+
+
+```
+
+<!--# Review intraoperative complications manually for mechanism -->
+
+Intraoperative complications were reviewed manually for mechanism.
+
+```{r}
+#| label: Complication-discrepancies
+#| eval: false
+
+ComplicDiscrep <- ComplicTable3 |> filter(
+  DateCheck == "Check"|
+    is.na(`Complication Nature`)|
+    (`Reoperation Procedure` == "Yes" & `Complication Occurrence` == "No")
+)
+
+#Identify duplicate entries
+ComplicDiscrep2 <- ComplicTable3 |>
+  group_by(TreatmentID, DateOccurFix) |>
+  filter(n() > 1)
+
+# Identify the problematic codes that are not linking back to the ProductTable correctly
+
+with_gs4_quiet(googlesheets4::range_write(
+  ss = SheetIDs$AuditResults,
+  data = bind_rows(ComplicDiscrep,ComplicDiscrep2) |> arrange(TreatmentID),
+  sheet = "ComplicDiscrepancy",
+  range = "A1:AD",
+  col_names = TRUE
+)
+)
+
+
+```
+
+```{r}
+#| label: Complications-missing
+#| eval: false
+
+# Comment out after first use
+ # range_write(ComplicTable4,
+ #             ss = "https://docs.google.com/spreadsheets/d/1e7431oSrK9tItiSZb4wCWPI7nqGqawH8pNgnqgHPNkU/edit",
+ #             sheet = "ComplicDiscrepancy2",
+ #             range = "A1:AC")
+
+ with_gs4_quiet(range_write(SnapshotComb2a |>
+               filter(SurgicalTreatment == "Surgical" & is.na(ComplicationOccurrence)) |>
+               dplyr::select(TreatmentID,DateTreatment),
+             ss = SheetIDs$AuditResults,
+             sheet = "ComplicMissing",
+            range = "A1:C")
+ )
+```
+
 
 # PRULO Summary
 
@@ -1902,7 +2013,7 @@ SelectRep1 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> 
@@ -2180,12 +2291,18 @@ TableRep1RC3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-)
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  ) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep1RC3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.15,
-  align = "center",
+  width = 0.5,
+  align = "left",
   opts_word = list(
     split = TRUE
     )
@@ -2211,7 +2328,7 @@ FailuresRep1RC <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -2225,19 +2342,20 @@ FailuresRep1RC <-
 
 ```
 
-```{epoxy}
+```{r}
 #| label:  Failure-Report-Rep1B-Proc1
 #| eval: true
 
 {ifelse(nrow(FailuresRep1RC) == 0,
         epoxy::epoxy("There are no failures or revisions to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = FailuresRep1RC |> arrange(TreatmentID),
          sheet = "Failures1",
          range = "A1:P",
          col_names = TRUE
          )
+       )
 )}
 
 
@@ -2259,15 +2377,72 @@ SelectRep1Other <- SelectRep1 |> filter(
 )
 ```
 
+
+
+```{r}
+#| label: tbl-intraop-complications-1A
+#| tbl-cap: "Summary of PRULO Report 1 (Rotator Cuff) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep1RC |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep1RC)
+  complication_cases <- SelectRep1RC |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep1RC$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
+
+
+
+
 ```{r}
 #| label: tbl-Rep1RC4
-#| tbl-cap: "Summary of PRULO Report 1 (Rotator Cuff) Cases - Adverse Events. Events are postoperative unless otherwise indicated."
+#| tbl-cap: "Summary of PRULO Report 1 (Rotator Cuff) Cases - Postoperative Events."
 
 # Now create the summary table
 TableRep1RC4 <- SelectRep1RC |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -2286,7 +2461,7 @@ TableRep1RC4 <- SelectRep1RC |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -2303,10 +2478,6 @@ TableRep1RC4 <- SelectRep1RC |>
         all_continuous() ~ "{conf.low} - {conf.high}"
         
       )
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling(
       columns = label,
       rows = label == "Other",
@@ -2381,7 +2552,7 @@ SelectRep1RCReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -2406,7 +2577,7 @@ SelectRep1RCReop <- ComplicTable3 |> filter(
 
 {ifelse(nrow(SelectRep1RCReop) == 0,
         epoxy::epoxy("There are no reoperations or to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep1RCReop,
          sheet = "Reoperations1",
@@ -2414,6 +2585,7 @@ SelectRep1RCReop <- ComplicTable3 |> filter(
          col_names = TRUE
          )
       )
+)
       }
 
 
@@ -2641,7 +2813,8 @@ gtsummary::as_flex_table(TableRep1BT2) |> flextable::set_table_properties(
 
 ### Treatment Survival
 
-```{epoxy Duration Rep1 Proc2}
+```{epoxy}
+#| label: Duration-Rep1B
 
 The mean follow up duration is {round(SelectRep1BT |> ungroup() |> summarise(mean = mean(Duration))/52,1)} years, with a standard deviation of {round(SelectRep1BT |> ungroup() |> summarise(sd = sd(Duration))/52,2)} years.
 ```
@@ -2656,7 +2829,7 @@ Table 9:
 
 ```{r}
 #| label: tbl-rept1bt3
-#| tbl-cap: "Summary of PRULO Report 1 (Biceps Tenodesis) procedure survival"
+#| tbl-cap: "Summary of PRULO Report 1 (Biceps Tenodesis) procedure survival ("
 
 TableRep1BT3 <- tbl_survfit(
   survfit2(Surv(Duration, Status) ~ 1, 
@@ -2665,7 +2838,10 @@ TableRep1BT3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep1BT3) |> flextable::set_table_properties(
   layout = "autofit",
@@ -2678,7 +2854,8 @@ gtsummary::as_flex_table(TableRep1BT3) |> flextable::set_table_properties(
 
 ```
 
-```{r Failure Report Rep1A Proc2}
+```{r}
+#| label: failure-Rep1B
 
 #Previous surgery(ies) at the same site Anatomical Location 
 #Anchor 1 Anchor 2 Anchor 3 Anchor 4
@@ -2695,7 +2872,7 @@ FailuresRep1BT <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -2710,7 +2887,7 @@ FailuresRep1BT <-
 ```
 
 ```{epoxy}
-#| label: Failure-Report-Rep1B-Proc2
+#| label: Failure-Report-Rep1B
 
 
 {ifelse(nrow(FailuresRep1BT) == 0,
@@ -2728,19 +2905,69 @@ FailuresRep1BT <-
 
 ### Adverse Events
 
-Complications and adverse events as confirmed by the surgeons are summarised below.
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
 
-Table 10:
+```{r}
+#| label: tbl-intraop-complications-1B
+#| tbl-cap: "Summary of PRULO Report 1 (Biceps Tenodesis) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep1BT |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep1BT)
+  complication_cases <- SelectRep1BT |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep1BT$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
 
 ```{r}
 #| label: tbl-rept1bt4
-#| tbl-cap: "Summary of PRULO Report 1 (Biceps Tenodesis) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 1 (Biceps Tenodesis) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep1BT4 <- SelectRep1BT |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -2760,7 +2987,7 @@ TableRep1BT4 <- SelectRep1BT |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       #ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -2777,10 +3004,6 @@ TableRep1BT4 <- SelectRep1BT |>
         #all_continuous() ~ "{conf.low} - {conf.high}"
         
       )
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling (
       columns = label,
       rows = label == "Subsequent Treatment",
@@ -2847,7 +3070,7 @@ SelectRep1BTReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -3038,7 +3261,7 @@ SelectRep2 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> 
@@ -3289,7 +3512,10 @@ TableRep2RC3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
   gtsummary::as_flex_table(TableRep2RC3) |> flextable::set_table_properties(
   layout = "autofit",
@@ -3320,7 +3546,7 @@ FailuresRep2RC <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -3341,14 +3567,16 @@ FailuresRep2RC <-
 
 {ifelse(nrow(FailuresRep2RC) == 0,
         epoxy::epoxy("There are no failures or revisions to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = FailuresRep2RC |> arrange(TreatmentID),
          sheet = "Failures2",
          range = "A1:P",
          col_names = TRUE
          )
-)}
+       )
+)
+  }
 
 
 ```
@@ -3368,15 +3596,69 @@ SelectRep2Other <- SelectRep2 |> filter(
 )
 ```
 
+
+```{r}
+#| label: tbl-intraop-complications-2A
+#| tbl-cap: "Summary of PRULO Report 2 (Rotator Cuff) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep2RC |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep2RC)
+  complication_cases <- SelectRep2RC |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep2RC$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
+
+
 ```{r}
 #| label: tbl-Rep2RC4
-#| tbl-cap: "Summary of PRULO Report 2 (Rotator Cuff) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 2 (Rotator Cuff) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep2RC4 <- SelectRep2RC |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -3395,7 +3677,7 @@ TableRep2RC4 <- SelectRep2RC |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -3412,10 +3694,6 @@ TableRep2RC4 <- SelectRep2RC |>
         all_continuous() ~ "{conf.low} - {conf.high}"
         
       )
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling(
       columns = label,
       rows = label == "Other",
@@ -3490,7 +3768,7 @@ SelectRep2RCReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -3515,7 +3793,7 @@ Write reoperations to external sheet
 
 {ifelse(nrow(SelectRep2RCReop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep2RCReop,
          sheet = "Reoperations2",
@@ -3523,6 +3801,7 @@ Write reoperations to external sheet
          col_names = TRUE
          )
       )
+)
       }
 
 
@@ -3781,7 +4060,10 @@ TableRep2BT3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep2BT3) |> flextable::set_table_properties(
   layout = "autofit",
@@ -3811,7 +4093,7 @@ FailuresRep2BT <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -3845,17 +4127,70 @@ FailuresRep2BT <-
 
 ### Adverse Events
 
-Complications and adverse events as confirmed by the surgeons are summarised below.
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: tbl-intraop-complications-2B
+#| tbl-cap: "Summary of PRULO Report 2 (Biceps Tenodesis) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep2BT |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep2BT)
+  complication_cases <- SelectRep2BT |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep2BT$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
 
 ```{r}
 #| label: tbl-Rep2BT4
-#| tbl-cap: "Summary of PRULO Report 2 (Biceps Tenodesis) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 2 (Biceps Tenodesis) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep2BT4 <- SelectRep2BT |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -3875,7 +4210,7 @@ TableRep2BT4 <- SelectRep2BT |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       #ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -3892,10 +4227,6 @@ TableRep2BT4 <- SelectRep2BT |>
         #all_continuous() ~ "{conf.low} - {conf.high}"
         
       )
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling (
       columns = label,
       rows = label == "Subsequent Treatment",
@@ -3962,7 +4293,7 @@ SelectRep2BTReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -4147,7 +4478,7 @@ SelectRep3 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_max(`Reoperation Procedure Date`, n = 1) |> ungroup() |> dplyr::select(
@@ -4392,7 +4723,10 @@ TableRep3RC3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep3RC3) |> flextable::set_table_properties(
   layout = "autofit",
@@ -4422,7 +4756,7 @@ FailuresRep3RC <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -4443,14 +4777,16 @@ FailuresRep3RC <-
 
 {ifelse(nrow(FailuresRep3RC) == 0,
         epoxy::epoxy("There are no failures or revisions to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = FailuresRep3RC |> arrange(TreatmentID),
          sheet = "Failures3",
          range = "A1:P",
          col_names = TRUE
          )
-)}
+       )
+)
+  }
 
 
 ```
@@ -4458,6 +4794,62 @@ FailuresRep3RC <-
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: tbl-intraop-complications-3A
+#| tbl-cap: "Summary of PRULO Report 3 (Rotator Cuff) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep3RC |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep3RC)
+  complication_cases <- SelectRep3RC |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep3RC$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
+
 
 ```{r}
 #| label:  Complication-Other-Rep3
@@ -4474,13 +4866,11 @@ SelectRep3Other <- SelectRep3 |> filter(
 
 ```{r}
 #| label: tbl-Rep3RC4
-#| tbl-cap: "Summary of PRULO Report 3 (Rotator Cuff) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 3 (Rotator Cuff) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep3RC4 <- SelectRep3RC |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -4500,7 +4890,7 @@ TableRep3RC4 <- SelectRep3RC |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       #ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -4519,10 +4909,6 @@ TableRep3RC4 <- SelectRep3RC |>
 
        )
      ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
-    ) |> modify_table_styling(
       columns = label,
       rows = label == "Other",
       footnote = "Myocardial Infarction"
@@ -4594,7 +4980,7 @@ SelectRep3RCReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -4620,7 +5006,7 @@ Write reoperations to external sheet
 
 {ifelse(nrow(SelectRep3RCReop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep3RCReop,
          sheet = "Reoperations3",
@@ -4628,6 +5014,7 @@ Write reoperations to external sheet
          col_names = TRUE
          )
       )
+)
       }
 
 
@@ -4871,10 +5258,14 @@ TableRep3BT3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
+
  gtsummary::as_flex_table(TableRep3BT3) |> flextable::set_table_properties(
    layout = "autofit",
-   width = 0.15,
+   width = 0.5,
    align = "center",
    opts_word = list(
      split = TRUE
@@ -4900,7 +5291,7 @@ FailuresRep3BT <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -4931,17 +5322,70 @@ FailuresRep3BT <-
 
 ### Adverse Events
 
-Complications and adverse events as confirmed by the surgeons are summarised below.
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: tbl-intraop-complications-3B
+#| tbl-cap: "Summary of PRULO Report 3 (Biceps Tenodesis) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep3BT |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep3BT)
+  complication_cases <- SelectRep3BT |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep3BT$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
 
 ```{r}
 #| label: tbl-Rep3BT4
-#| tbl-cap: "Summary of PRULO Report 3 (Biceps Tenodesis) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 3 (Biceps Tenodesis) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep3BT4 <- SelectRep3BT |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -4961,7 +5405,7 @@ TableRep3BT4 <- SelectRep3BT |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       #ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -4978,10 +5422,6 @@ TableRep3BT4 <- SelectRep3BT |>
         #all_continuous() ~ "{conf.low} - {conf.high}"
         
       )
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling (
       columns = label,
       rows = label == "Subsequent Treatment",
@@ -5047,7 +5487,7 @@ SelectRep3BTReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -5235,7 +5675,7 @@ SelectRep4 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_max(`Reoperation Procedure Date`, n = 1) |> ungroup() |> dplyr::select(
@@ -5478,7 +5918,10 @@ TableRep4RC3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep4RC3) |> flextable::set_table_properties(
   layout = "autofit",
@@ -5509,7 +5952,7 @@ FailuresRep4RC <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -5530,21 +5973,78 @@ FailuresRep4RC <-
 
 {ifelse(nrow(FailuresRep4RC) == 0,
         epoxy::epoxy("There are no failures or revisions to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = FailuresRep4RC |> arrange(TreatmentID),
          sheet = "Failures4",
          range = "A1:P",
          col_names = TRUE
          )
-)}
+       )
+)
+  }
 
 
 ```
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: tbl-intraop-complications-4A
+#| tbl-cap: "Summary of PRULO Report 4 (Rotator Cuff) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep4RC |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep4RC)
+  complication_cases <- SelectRep4RC |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep4RC$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
 
 ```{r}
 #| label:  Complication-Other-Rep4
@@ -5560,13 +6060,11 @@ SelectRep4Other <- SelectRep4 |> filter(
 
 ```{r}
 #| label: tbl-TableRep4RC4
-#| tbl-cap: "Summary of PRULO Report 4 (Rotator Cuff) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 4 (Rotator Cuff) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep4RC4 <- SelectRep4RC |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -5586,7 +6084,7 @@ TableRep4RC4 <- SelectRep4RC |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       #ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -5603,10 +6101,6 @@ TableRep4RC4 <- SelectRep4RC |>
         all_continuous() ~ "{conf.low} - {conf.high}"
         
       )
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling(
       columns = label,
       rows = label == "Other",
@@ -5676,7 +6170,7 @@ SelectRep4RCReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -5702,7 +6196,7 @@ SelectRep4RCReop <- ComplicTable3 |> filter(
 
 {ifelse(nrow(SelectRep4RCReop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep4RCReop,
          sheet = "Reoperations4",
@@ -5710,6 +6204,7 @@ SelectRep4RCReop <- ComplicTable3 |> filter(
          col_names = TRUE
          )
       )
+)
       }
 
 
@@ -5954,7 +6449,10 @@ TableRep4BT3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep4BT3) |> flextable::set_table_properties(
   layout = "autofit",
@@ -5985,7 +6483,7 @@ FailuresRep4BT <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -6015,17 +6513,70 @@ FailuresRep4BT <-
 
 ### Adverse Events
 
-Complications and adverse events as confirmed by the surgeons are summarised below.
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: tbl-intraop-complications-4B
+#| tbl-cap: "Summary of PRULO Report 4 (Biceps Tenodesis) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep4BT |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep4BT)
+  complication_cases <- SelectRep4BT |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep4BT$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
 
 ```{r}
 #| label: tbl-TableRep4BT4
-#| tbl-cap: "Summary of PRULO Report 4 (Biceps Tenodesis) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 4 (Biceps Tenodesis) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep4BT4 <- SelectRep4BT |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -6045,7 +6596,7 @@ TableRep4BT4 <- SelectRep4BT |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       #ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -6062,10 +6613,6 @@ TableRep4BT4 <- SelectRep4BT |>
         #all_continuous() ~ "{conf.low} - {conf.high}"
         
       )
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling (
       columns = label,
       rows = label == "Subsequent Treatment",
@@ -6131,7 +6678,7 @@ SelectRep4BTReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -6318,7 +6865,7 @@ SelectRep5 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_max(`Reoperation Procedure Date`, n = 1) |> ungroup() |> dplyr::select(
@@ -6565,7 +7112,10 @@ TableRep5RC3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep5RC3) |> flextable::set_table_properties(
   layout = "autofit",
@@ -6596,7 +7146,7 @@ FailuresRep5RC <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -6617,21 +7167,78 @@ FailuresRep5RC <-
 
 {ifelse(nrow(FailuresRep5RC) == 0,
         epoxy::epoxy("There are no failures or revisions to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = FailuresRep5RC |> arrange(TreatmentID),
          sheet = "Failures5",
          range = "A1:P",
          col_names = TRUE
          )
-)}
+       )
+)
+  }
 
 
 ```
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: tbl-intraop-complications-5A
+#| tbl-cap: "Summary of PRULO Report 5 (Rotator Cuff) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep5RC |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep5RC)
+  complication_cases <- SelectRep5RC |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep5RC$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
 
 ```{r}
 #| label:  Complication-Other-Rep5
@@ -6647,13 +7254,11 @@ SelectRep5Other <- SelectRep5 |> filter(
 
 ```{r}
 #| label: tbl-TableRep5RC4
-#| tbl-cap: "Summary of PRULO Report 5 (Rotator Cuff) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 5 (Rotator Cuff) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep5RC4 <- SelectRep5RC |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -6673,7 +7278,7 @@ TableRep5RC4 <- SelectRep5RC |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       #ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -6690,10 +7295,6 @@ TableRep5RC4 <- SelectRep5RC |>
         all_continuous() ~ "{conf.low} - {conf.high}"
         
       )
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling(
       columns = label,
       rows = label == "Other",
@@ -6763,7 +7364,7 @@ SelectRep5RCReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -6789,14 +7390,16 @@ SelectRep5RCReop <- ComplicTable3 |> filter(
 
 {ifelse(nrow(SelectRep5RCReop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep5RCReop,
          sheet = "Reoperations5",
          range = "A1:P",
          col_names = TRUE
          )
-      )}
+       )
+)
+  }
 
 
 
@@ -7045,7 +7648,10 @@ TableRep5BT3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 
 gtsummary::as_flex_table(TableRep5BT3) |> flextable::set_table_properties(
@@ -7077,7 +7683,7 @@ FailuresRep5BT <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -7108,17 +7714,70 @@ FailuresRep5BT <-
 
 ### Adverse Events
 
-Complications and adverse events as confirmed by the surgeons are summarised below.
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: tbl-intraop-complications-5B
+#| tbl-cap: "Summary of PRULO Report 5 (Biceps Tenodesis) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep5BT |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep5BT)
+  complication_cases <- SelectRep5BT |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep5BT$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
 
 ```{r}
 #| label: tbl-TableRep5BT4
-#| tbl-cap: "Summary of PRULO Report 5 (Biceps Tenodesis) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 5 (Biceps Tenodesis) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep5BT4 <- SelectRep5BT |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -7138,7 +7797,7 @@ TableRep5BT4 <- SelectRep5BT |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       #ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -7155,10 +7814,6 @@ TableRep5BT4 <- SelectRep5BT |>
         #all_continuous() ~ "{conf.low} - {conf.high}"
         
       )
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling (
       columns = label,
       rows = label == "Subsequent Treatment",
@@ -7225,7 +7880,7 @@ SelectRep5BTReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -7416,7 +8071,7 @@ SelectRep6 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_max(`Reoperation Procedure Date`, n = 1) |> ungroup() |> dplyr::select(
@@ -7647,7 +8302,10 @@ TableRep63 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep63) |> flextable::set_table_properties(
   layout = "autofit",
@@ -7678,7 +8336,7 @@ FailuresRep6 <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -7699,21 +8357,58 @@ FailuresRep6 <-
 
 {ifelse(nrow(FailuresRep6) == 0,
         epoxy::epoxy("There are no failures or revisions to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = FailuresRep6 |> arrange(TreatmentID),
          sheet = "Failures6",
          range = "A1:P",
          col_names = TRUE
          )
-)}
+       )
+)
+  }
 
 
 ```
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit).
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: IntraopComp - Rep6A
+
+
+# Check if any Count value is greater than zero in filtered data
+has_complications <- SelectRep6 |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally set chunk options and generate table
+if (has_complications == 0) {
+  # If no rows, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  knitr::opts_current$set(
+    label = "tbl-intraop-complications-6",
+    tbl.cap = "Summary of PRULO Report 6 (All) Cases - Intraoperative Events"
+  )
+  
+  IntraopComp |> filter(
+    TreatmentID %in% SelectRep6$TreatmentID
+  ) |> rename(
+    Description = "ICNature2",
+    Intervention = "ICIntervention",
+    PostopManagement = "ICPostopManagement"
+  ) |> select(
+    TreatmentID,
+    Description,
+    Intervention,
+    PostopManagement
+    ) |> gt::gt()
+}
+```
 
 ```{r}
 #| label:  Complication-Other-Rep6
@@ -7730,13 +8425,11 @@ SelectRep6Other <- SelectRep6 |> filter(
 
 ```{r}
 #| label: tbl-TableRep64
-#| tbl-cap: "Summary of PRULO Report 6 (All) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 6 (All) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep64 <- SelectRep6 |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -7755,7 +8448,6 @@ TableRep64 <- SelectRep6 |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -7770,10 +8462,6 @@ TableRep64 <- SelectRep6 |>
     digits = list(
       all_continuous() ~ 1,
       all_categorical() ~ 0)
-    )  |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Anchor loosening, immediate replacement"
     ) |> modify_table_styling (
       columns = label,
       rows = label == "Subsequent Treatment",
@@ -7843,7 +8531,7 @@ SelectRep6Reop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -7869,14 +8557,16 @@ Write reoperations to external sheet
 
 {ifelse(nrow(SelectRep6Reop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep6Reop,
          sheet = "Reoperations6",
          range = "A1:P",
          col_names = TRUE
          )
-      )}
+       )
+)
+  }
 
 
 
@@ -8094,7 +8784,10 @@ TableRep6BR3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep6BR3) |> flextable::set_table_properties(
   layout = "autofit",
@@ -8125,7 +8818,7 @@ FailuresRep6BR <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -8159,7 +8852,61 @@ FailuresRep6BR <-
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+```{r}
+#| label: tbl-intraop-complications-6B
+#| tbl-cap: "Summary of PRULO Report 6 (Bankart Repair) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep6BR |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep6BR)
+  complication_cases <- SelectRep6BR |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep6BR$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
 
 ```{r}
 #| label:  Complication-Other-Rep6BR
@@ -8176,13 +8923,11 @@ SelectRep6BROther <- SelectRep6BR |> filter(
 
 ```{r}
 #| label: tbl-TableRep6BR4
-#| tbl-cap: "Summary of PRULO Report 6 (Bankart Repair) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 6 (Bankart Repair) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep6BR4 <- SelectRep6BR |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -8201,7 +8946,6 @@ TableRep6BR4 <- SelectRep6BR |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -8216,11 +8960,7 @@ TableRep6BR4 <- SelectRep6BR |>
     digits = list(
       all_continuous() ~ 1,
       all_categorical() ~ 0)
-    )  |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
-    ) |> modify_table_styling (
+    )  |> modify_table_styling (
       columns = label,
       rows = label == "Subsequent Treatment",
       footnote = "Management undertaken for procedures that have suffered tissue failure or required hardware removal or replacement"
@@ -8290,7 +9030,7 @@ SelectRep6BRReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -8315,14 +9055,16 @@ Write reoperations to external sheet
 
 {ifelse(nrow(SelectRep6BRReop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep6BRReop,
          sheet = "Reoperations6",
          range = "A1:P",
          col_names = TRUE
          )
-      )}
+       )
+)
+  }
 
 
 
@@ -8458,7 +9200,7 @@ SelectRep7 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_max(`Reoperation Procedure Date`, n = 1) |> ungroup() |> dplyr::select(
@@ -8695,7 +9437,10 @@ TableRep73 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep73) |> flextable::set_table_properties(
   layout = "autofit",
@@ -8726,7 +9471,7 @@ FailuresRep7 <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -8747,14 +9492,16 @@ FailuresRep7 <-
 
 {ifelse(nrow(FailuresRep7) == 0,
         epoxy::epoxy("There are no failures to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = FailuresRep7 |> arrange(TreatmentID),
          sheet = "Failures7",
          range = "A1:P",
          col_names = TRUE
          )
-)}
+       )
+)
+  }
 
 
 ```
@@ -8762,6 +9509,41 @@ FailuresRep7 <-
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: IntraopComp - Rep7A
+
+
+# Check if any Count value is greater than zero in filtered data
+has_complications <- SelectRep7 |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally set chunk options and generate table
+if (has_complications == 0) {
+  # If no rows, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  knitr::opts_current$set(
+    label = "tbl-intraop-complications-7A",
+    tbl.cap = "Summary of PRULO Report 7 (All) Cases - Intraoperative Events"
+  )
+  
+  IntraopComp |> filter(
+    TreatmentID %in% SelectRep7$TreatmentID
+  ) |> rename(
+    Description = "ICNature2",
+    Intervention = "ICIntervention",
+    PostopManagement = "ICPostopManagement"
+  ) |> select(
+    TreatmentID,
+    Description,
+    Intervention,
+    PostopManagement
+    ) |> gt::gt()
+}
+```
 
 ```{r}
 #| label:  Complication-Other-Rep7
@@ -8777,13 +9559,11 @@ SelectRep7Other <- SelectRep7 |> filter(
 
 ```{r}
 #| label: tbl-TableRep74
-#| tbl-cap: "Summary of PRULO Report 7 (All) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 7 (All) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep74 <- SelectRep7 |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -8802,7 +9582,7 @@ TableRep74 <- SelectRep7 |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -8817,11 +9597,7 @@ TableRep74 <- SelectRep7 |>
     digits = list(
       all_continuous() ~ 1,
       all_categorical() ~ 0)
-    )  |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
-    ) |> modify_table_styling (
+    )  |> modify_table_styling (
       columns = label,
       rows = label == "Subsequent Treatment",
       footnote = "Management undertaken for procedures that have suffered tissue failure or required hardware removal or replacement"
@@ -8892,7 +9668,7 @@ SelectRep7Reop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -8918,14 +9694,16 @@ Write reoperations to external sheet
 
 {ifelse(nrow(SelectRep7Reop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep7Reop,
          sheet = "Reoperations7",
          range = "A1:P",
          col_names = TRUE
          )
-      )}
+       )
+)
+  }
 
 
 
@@ -9143,7 +9921,10 @@ TableRep7BR3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep7BR3) |> flextable::set_table_properties(
   layout = "autofit",
@@ -9173,7 +9954,7 @@ FailuresRep7BR <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -9210,6 +9991,61 @@ FailuresRep7BR <-
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
 
+
+```{r}
+#| label: tbl-intraop-complications-7B
+#| tbl-cap: "Summary of PRULO Report 7 (Bankart Repair) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep7BR |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep7BR)
+  complication_cases <- SelectRep7BR |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep7BR$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
+
 ```{r}
 #| label: Complication-Other-Rep7BR
 
@@ -9225,13 +10061,11 @@ SelectRep7BROther <- SelectRep7BR |> filter(
 
 ```{r}
 #| label: tbl-TableRep7BR4
-#| tbl-cap: "Summary of PRULO Report 7 (Bankart Repair) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 7 (Bankart Repair) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep7BR4 <- SelectRep7BR |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -9250,7 +10084,7 @@ TableRep7BR4 <- SelectRep7BR |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -9265,10 +10099,6 @@ TableRep7BR4 <- SelectRep7BR |>
     digits = list(
       all_continuous() ~ 1,
       all_categorical() ~ 0)
-    )  |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling (
       columns = label,
       rows = label == "Subsequent Treatment",
@@ -9338,7 +10168,7 @@ SelectRep7BRReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -9364,14 +10194,16 @@ Write reoperations to external sheet
 
 {ifelse(nrow(SelectRep7BRReop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep7BRReop,
          sheet = "Reoperations7",
          range = "A1:P",
          col_names = TRUE
          )
-      )}
+       )
+)
+  }
 
 
 
@@ -9508,7 +10340,7 @@ SelectRep8 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_max(`Reoperation Procedure Date`, n = 1) |> ungroup() |> dplyr::select(
@@ -9575,6 +10407,64 @@ Usage of the Product within the patient group is summarised below.
         epoxy::epoxy("There are {nrow(SelectRep8BR)} cases involving the anchor of interest and a Bankart repair. Surgeries were performed between {format(min(SelectRep8BR$DateTreatment),'%Y-%b-%d')} to {format(max(SelectRep8BR$DateTreatment),'%Y-%b-%d')}."
         )))} 
 
+
+```
+
+## Adverse Events
+
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+```{r}
+#| label: tbl-intraop-complications-8
+#| tbl-cap: "Summary of PRULO Report 8 (All) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep8 |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep8)
+  complication_cases <- SelectRep8 |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep8$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
 
 ```
 
@@ -9654,7 +10544,7 @@ SelectRep9 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_min(DateOccurFix, n = 1) |> ungroup() |> dplyr::select(
@@ -9721,6 +10611,64 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
+## Adverse Events
+
+Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+```{r}
+#| label: tbl-intraop-complications-9
+#| tbl-cap: "Summary of PRULO Report 9 (All) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep9 |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep9)
+  complication_cases <- SelectRep9 |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep9$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
+
 # Product Report 10 - Latarjet Screw
 
 ## Sample Selection
@@ -9731,7 +10679,7 @@ The sample of patients with the relevant product group were identified and data 
 #| label: Reference-Code-Rep10 
 
 RefCode10 <- ProductTable |> filter(
-  (Category == "Screw"|Category == "Interference Screw") &
+  (Category == "Screw" | Category == "Interference Screw") &
   stringr::str_detect(stringr::str_to_lower(Description),"latarjet")
 )
 
@@ -9795,7 +10743,7 @@ SelectRep10 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_max(`Reoperation Procedure Date`, n = 1) |> ungroup() |> dplyr::select(
@@ -10013,7 +10961,10 @@ TableRep103 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 
 gtsummary::as_flex_table(TableRep103) |> flextable::set_table_properties(
@@ -10044,7 +10995,7 @@ FailuresRep10 <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -10065,14 +11016,16 @@ FailuresRep10 <-
 
 {ifelse(nrow(FailuresRep10) == 0,
         epoxy::epoxy("There are no failures or revisions to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = FailuresRep10 |> arrange(TreatmentID),
          sheet = "Failures10",
          range = "A1:P",
          col_names = TRUE
          )
-)}
+       )
+)
+  }
 
 
 ```
@@ -10080,6 +11033,61 @@ FailuresRep10 <-
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: tbl-intraop-complications-10
+#| tbl-cap: "Summary of PRULO Report 10 (All) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep10 |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep10)
+  complication_cases <- SelectRep10 |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep10$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
 
 ```{r}
 #| label: Complication-Other-Rep10 
@@ -10094,13 +11102,11 @@ SelectRep10Other <- SelectRep10 |> filter(
 
 ```{r}
 #| label: tbl-TableRep104
-#| tbl-cap: "Summary of PRULO Report 10 (All) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 10 (All) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep104 <- SelectRep10 |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -10120,7 +11126,7 @@ TableRep104 <- SelectRep10 |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -10135,10 +11141,6 @@ TableRep104 <- SelectRep10 |>
     digits = list(
       all_continuous() ~ 1,
       all_categorical() ~ 0)
-    )  |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling (
       columns = label,
       rows = label == "Subsequent Treatment",
@@ -10212,7 +11214,7 @@ SelectRep10Reop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -10238,14 +11240,16 @@ Write reoperations to external sheet
 
 {ifelse(nrow(SelectRep10Reop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep10Reop,
          sheet = "Reoperations10",
          range = "A1:P",
          col_names = TRUE
          )
-      )}
+       )
+)
+  }
 
 
 
@@ -10377,7 +11381,7 @@ SelectRep11 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_max(`Reoperation Procedure Date`, n = 1) |> ungroup() |> dplyr::select(
@@ -10626,7 +11630,10 @@ TableRep11RC3 <- tbl_survfit(
   label_header = "**{time} Weeks**",
   label = "Procedure Survival",
   statistic = "{estimate} ({conf.low} - {conf.high})"
-) 
+) |> gtsummary::modify_footnote_header(
+    footnote = "% survival with 95% confidence intervals",
+    columns = all_stat_cols(),
+  )
 
 gtsummary::as_flex_table(TableRep11RC3) |> flextable::set_table_properties(
     layout = "autofit",
@@ -10656,7 +11663,7 @@ FailuresRep11RC <-
     TreatmentType,
     Duration,
     TreatmentStatusDesc,
-    ReoperationProcedure,
+    ReoperationProcedure2,
     SubsequentTx2,
     Product1,
     Product2,
@@ -10677,14 +11684,16 @@ FailuresRep11RC <-
 
 {ifelse(nrow(FailuresRep11RC) == 0,
         epoxy::epoxy("There are no failures or revisions to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = FailuresRep11RC |> arrange(TreatmentID),
          sheet = "Failures11",
          range = "A1:P",
          col_names = TRUE
          )
-)}
+       )
+)
+  }
 
 
 ```
@@ -10692,6 +11701,61 @@ FailuresRep11RC <-
 ### Adverse Events
 
 Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+
+
+```{r}
+#| label: tbl-intraop-complications-11A
+#| tbl-cap: "Summary of PRULO Report 11 (Rotator Cuff) Cases - Intraoperative Events"
+
+# Check if any complications exist in filtered data
+has_complications <- SelectRep11RC |> 
+  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  nrow() > 0
+
+# Conditionally generate content
+if (!has_complications) {
+  # If no complications, return the text message
+  epoxy("No intraoperative complications observed.")
+} else {
+  # Calculate incidence and confidence intervals
+  total_cases <- nrow(SelectRep11RC)
+  complication_cases <- SelectRep11RC |> 
+    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    nrow()
+  
+  # Calculate proportion and 95% CI using Wilson method
+  prop_result <- binom::binom.confint(complication_cases, total_cases, 
+                                      methods = "wilson")
+  incidence_pct <- round(prop_result$mean * 100, 1)
+  ci_lower <- round(prop_result$lower * 100, 1)
+  ci_upper <- round(prop_result$upper * 100, 1)
+  
+  # Generate summary sentence
+  summary_text <- glue::glue(
+    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
+  )
+  
+  # Print summary sentence
+  cat(summary_text, "\n\n")
+  
+  # Generate and return the table
+  IntraopComp |> 
+    filter(TreatmentID %in% SelectRep11RC$TreatmentID) |> 
+    rename(
+      Description = "ICNature2",
+      Intervention = "ICIntervention",
+      PostopManagement = "ICPostopManagement"
+    ) |> 
+    select(
+      TreatmentID,
+      Description,
+      Intervention,
+      PostopManagement
+    ) |> 
+    gt::gt()
+}
+
+```
 
 ```{r}
 #| label: Complication-Other-Rep11
@@ -10707,13 +11771,11 @@ SelectRep11Other <- SelectRep11 |> filter(
 
 ```{r}
 #| label: tbl-TableRep11RC4
-#| tbl-cap: "Summary of PRULO Report 11 (Rotator Cuff) Cases - Adverse Events"
+#| tbl-cap: "Summary of PRULO Report 11 (Rotator Cuff) Cases - Postoperative Events"
 
 # Now create the summary table
 TableRep11RC4 <- SelectRep11RC |>
   dplyr::select(
-    #ComplicationOccurrence,
-    Intraop,
     Infection,
     Ligament_Tendon,
     Effusion,
@@ -10733,7 +11795,7 @@ TableRep11RC4 <- SelectRep11RC |>
     label = list(
       Ligament_Tendon ~ "Ligament|Tendon (Retear)",
       #ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
-      Intraop ~ "Intraoperative Occurrence",
+      
       Reop ~ "Reoperation",
       SubsequentTx2 ~ "Subsequent Treatment"
       ),
@@ -10750,10 +11812,6 @@ TableRep11RC4 <- SelectRep11RC |>
         all_continuous() ~ "{conf.low} - {conf.high}"
         
       )
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "Intraoperative Occurrence",
-      footnote = "Related to anchor"
     ) |> modify_table_styling(
       columns = label,
       rows = label == "Other",
@@ -10823,7 +11881,7 @@ SelectRep11RCReop <- ComplicTable3 |> filter(
     Sex,
     TreatmentType,
     `Complication Nature`,
-    Intraop,
+
     EventDelay,
     Product1,
     Product2,
@@ -10849,14 +11907,16 @@ Write reoperations to external sheet
 
 {ifelse(nrow(SelectRep11RCReop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
-       googlesheets4::range_write(
+       with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = SelectRep11RCReop,
          sheet = "Reoperations11",
          range = "A1:P",
          col_names = TRUE
          )
-      )}
+       )
+)
+  }
 
 
 
@@ -11016,7 +12076,7 @@ SelectRep12 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
+
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_max(`Reoperation Procedure Date`, n = 1) |> ungroup() |> dplyr::select(
@@ -11164,7 +12224,6 @@ SelectRep13 <- SnapshotComb4 |>
   Effusion = TreatmentID %in% ComplicEffusion$TreatmentID,
   Pain = TreatmentID %in% ComplicPain$TreatmentID,
   Other = TreatmentID %in% ComplicOther$TreatmentID,
-  Intraop = TreatmentID %in% ComplicIntraop$TreatmentID,
   Reop = TreatmentID %in% ComplicReop$TreatmentID
 ) |> left_join(
   ComplicTable3 |> group_by(TreatmentID) |> slice_max(`Reoperation Procedure Date`, n = 1) |> ungroup() |> dplyr::select(
@@ -11327,17 +12386,44 @@ prop_table <- as.data.frame(
 
 ```
 
+## Proportion with multiple products
+
+The proportion of cases that contained hardware from different product codes was summarised. 
+
 ```{r}
+#| label: tbl-productusage2
+#| tbl-cap: "Summary of cases with multiple product codes included per report"
 
+SelectRep1 <- SelectRep |> 
+  rowwise() |> 
+  mutate(Sum = sum(c_across(Report1:Report13), na.rm = TRUE)) |>
+  ungroup()
 
+# Corrected approach using summarise
+summary_table <- SelectRep1 |>
+  summarise(across(Report1:Report13, list(
+    Total = ~sum(.x == 1, na.rm = TRUE),
+    Multiple = ~sum(.x == 1 & Sum > 1, na.rm = TRUE)
+  ))) |>
+  pivot_longer(everything(), 
+               names_to = c("Report", "metric"), 
+               names_pattern = "(.*)_(Total|Multiple)$",
+               values_to = "value") |>
+  pivot_wider(names_from = metric, values_from = value) |>
+  mutate(Proportion = Multiple / Total) |>
+  gt::gt(rownames_to_stub = TRUE) |>
+  gt::fmt_number(
+    columns = 5,
+    scale = 100,
+    decimals = 1
+  ) |>
+  tab_footnote(
+    footnote = "Proportion as a % of the Total",
+    locations = cells_column_labels(columns = Proportion)
+  )
 
-knitr::knit_print(prop_table)
+knitr::knit_print(summary_table)
+
 
 ```
 
-```{r}
-#| eval: false
-
-
-SelectCount <- t(colSums(SelectRepAll))
-```
