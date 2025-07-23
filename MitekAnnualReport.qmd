@@ -101,6 +101,7 @@ Load up required packages in advance.
 
  if(!require("pacman")) install.packages("pacman")
 pacman::p_load(
+  "binom",
   "knitr",
   "cardx",
   "quarto",
