@@ -11919,6 +11919,7 @@ Write reoperations to external sheet
 
 ```{r}
 #| label: Reoperations-Report-Rep11B-Proc1
+#| include: false
 
 # Authenticate for sheets using the same token
 gs4_auth(token = drive_token())
