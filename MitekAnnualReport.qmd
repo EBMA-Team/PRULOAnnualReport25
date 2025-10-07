@@ -1223,13 +1223,15 @@ ProductUsage2b <-ProductUsage2 |> filter(
 
 ```
 
+ Identify the problematic codes that are not linking back to the ProductTable correctly
+
 ```{epoxy}
 #| label: Product-tracking-1
 #| eval: true
 
 
 
-# Identify the problematic codes that are not linking back to the ProductTable correctly
+
 
 {ifelse(nrow(ProductUsage2b |> filter(is.na(Description)) |> arrange(ImplantCodes)) < 1,
         epoxy::epoxy("There are no cases to flag for discrepancies."),
@@ -11234,27 +11236,38 @@ SelectRep10Reop <- ComplicTable3 |> filter(
 
 Write reoperations to external sheet
 
-```{epoxy}
-#| label: Reoperations-Report-Rep10B-Proc1
+```{r}
+#| label: Reoperations-Report-Rep10B-Proc1-write
+#| include: false
+
+# Do the write operation silently
+if (nrow(SelectRep10Reop) > 0) {
+  invisible(
+    googlesheets4::range_write(
+      ss = SheetIDs$AuditReport,
+      data = SelectRep10Reop,
+      sheet = "Reoperations10",
+      range = "A1:P",
+      col_names = TRUE
+    )
+  )
+}
+
+```
 
 
+```{r}
+#| label: Reoperations-Report-Rep10B-Proc1-display
 
 {ifelse(nrow(SelectRep10Reop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep10Reop,
-         sheet = "Reoperations10",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+        "There are no reoperations to report.",
+        ""  # Empty string when data exists
+)}
 
 
 
 ```
+
 
 ### Patient-Reported Outcomes
 
@@ -11683,6 +11696,9 @@ FailuresRep11RC <-
 ```{epoxy}
 #| label: Failure-Report-Rep11B-Proc1
 
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
 {ifelse(nrow(FailuresRep11RC) == 0,
         epoxy::epoxy("There are no failures or revisions to report."),
        with_gs4_quiet(googlesheets4::range_write(
@@ -11904,7 +11920,8 @@ Write reoperations to external sheet
 ```{r}
 #| label: Reoperations-Report-Rep11B-Proc1
 
-
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
 
 {ifelse(nrow(SelectRep11RCReop) == 0,
         epoxy::epoxy("There are no reoperations to report."),
@@ -12399,6 +12416,58 @@ SelectRep1 <- SelectRep |>
   rowwise() |> 
   mutate(Sum = sum(c_across(Report1:Report13), na.rm = TRUE)) |>
   ungroup()
+
+
+
+
+
+```
+
+A cross-tabulation of usage for all products was generated and written to an external file for further review.
+
+```{r}
+#| label: cross-tabulation
+#| message: false
+#| warning: false
+#| include: false
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Create co-occurrence matrix
+report_cols <- paste0("Report", 1:13)
+
+# Extract report columns and convert to matrix
+report_matrix <- SelectRep1 |>
+  select(all_of(report_cols)) |>
+  as.matrix()
+
+# Calculate co-occurrence: t(matrix) %*% matrix gives counts
+cooccurrence <- t(report_matrix) %*% report_matrix
+
+# Convert to tibble with row names
+cooccurrence_table <- cooccurrence |>
+  as_tibble() |>
+  mutate(Report = report_cols, .before = 1)
+
+
+with_gs4_quiet(googlesheets4::range_write(
+         ss = SheetIDs$AuditReport,
+         data = cooccurrence_table,
+         sheet = "ProductUsage",
+         range = "A1:N",
+         col_names = TRUE
+         )
+       )
+
+
+```
+
+A summary table was generated to illustrate the proportion of cases where multiple product codes were utilised.
+
+```{r}
+#| label: tbl-productusage
+#| tbl-cap: "Summary of cross-product usage in the PRULO dataset"
 
 # Corrected approach using summarise
 summary_table <- SelectRep1 |>
