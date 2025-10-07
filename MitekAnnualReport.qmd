@@ -12467,7 +12467,7 @@ with_gs4_quiet(googlesheets4::range_write(
 A summary table was generated to illustrate the proportion of cases where multiple product codes were utilised.
 
 ```{r}
-#| label: tbl-productusage
+#| label: tbl-productusage3
 #| tbl-cap: "Summary of cross-product usage in the PRULO dataset"
 
 # Corrected approach using summarise
