@@ -12322,7 +12322,6 @@ Usage of the Product within the patient group is summarised below.
 Product usage patterns were determined by merging multiple product datasets into a single table. This combined data was then modified to include additional information and restructured to have separate columns for different product groups. Following this, a list of product category names was established and proportions for various combinations were calculated. The results were reformatted for presentation, with count data incorporated and proportions displayed as percentages.
 
 ```{r}
-
 #| label: Product-usage-summary
 
 # Second approach: Use values_fn to handle duplicates
@@ -12433,15 +12432,16 @@ prop_table <- as.data.frame(
 
 ```
 
+
+
 ## Proportion with multiple products
 
 The proportion of cases that contained hardware from different product codes was summarised. 
 
 ```{r}
-#| label: tbl-productusage2
-#| tbl-cap: "Summary of cases with multiple product codes included per report"
+#| label: product-usage2
 
-SelectRep1 <- SelectRep |> 
+SelectRepSum <- SelectRep |> 
   rowwise() |> 
   mutate(Sum = sum(c_across(Report1:Report13), na.rm = TRUE)) |>
   ungroup()
@@ -12467,7 +12467,7 @@ gs4_auth(token = drive_token())
 report_cols <- paste0("Report", 1:13)
 
 # Extract report columns and convert to matrix
-report_matrix <- SelectRep1 |>
+report_matrix <- SelectRepSum |>
   select(all_of(report_cols)) |>
   as.matrix()
 
