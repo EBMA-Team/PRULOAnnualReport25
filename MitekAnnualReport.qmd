@@ -2555,7 +2555,7 @@ SelectRep1RCReop <- ComplicTable3 |> filter(
 
 
 <!--# Write reoperations to external sheet -->
-
+Write reoperations to external table
 
 ```{r}
 #| label:  Reoperations-Report-Rep1B-Proc1
