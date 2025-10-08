@@ -180,44 +180,44 @@ Include a series of functions to call later in the file for processing data impo
 base_folder_id1 <- "1og1hWKEXFcy8v8pLSzA_Ii767bbCe_EK"
 
 
+
+
 ```
 
 ```{r}
-#| label: Retrieve-snapshot
+#| label: Retrieve-snapshot-func
 
 
-get_latest_snapshot <- function(base_folder_id = base_folder_id1) {
+get_specific_snapshot <- function(folder_name, base_folder_id = base_folder_id1) {
   tryCatch({
-    # List all folders in the base directory
-    folders <- googledrive::drive_ls(as_id(base_folder_id), pattern = "^\\d{8}$")
+    # Check if the folder exists in the base directory
+    folder <- googledrive::drive_ls(as_id(base_folder_id), pattern = paste0("^", folder_name, "$"))
     
-    if(nrow(folders) == 0) {
-      stop("No dated folders found")
+    if(nrow(folder) == 0) {
+      stop(paste("Folder", folder_name, "not found"))
     }
     
-    # Sort folders by name (date) in descending order
-    latest_folder <- folders[order(folders$name, decreasing = TRUE),][1,]
-    
-    # Find the snapshot file in the latest folder
+    # Find the snapshot file in the specified folder
     snapshot_file <- googledrive::drive_ls(
-      latest_folder$id, 
+      folder$id, 
       pattern = "Registry data snapshot\\.xlsx$"
     )
     
     if(nrow(snapshot_file) == 0) {
-      stop("No snapshot file found in latest folder")
+      stop("No snapshot file found in specified folder")
     }
     
     # Return both pieces of information as a list
     return(list(
       snapshot = snapshot_file,
-      folder_name = latest_folder$name
+      folder_name = folder$name
     ))
     
   }, error = function(e) {
-    stop(paste("Error finding latest snapshot:", e$message))
+    stop(paste("Error finding specified snapshot:", e$message))
   })
 }
+
 ```
 
 ```{r}
@@ -435,19 +435,29 @@ TargetTerms2 <- googlesheets4::range_read(
 ```{r}
 #| label: Import-snapshot
 
-# Get the latest snapshot file
-latest_snapshot <- get_latest_snapshot()
-# 
-# You can then use these in your subsequent code:
-temp_file <- tempfile(fileext = ".xlsx")
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# To get a snapshot from a specific folder (e.g., "20230415")
+specific_snapshot <- get_specific_snapshot("20250331")
+
+
+```
+
+
+```{r}
+temp_file1 <- tempfile(fileext = ".xlsx")
 drive_download(
-  file = latest_snapshot$snapshot$id,
-  path = temp_file,
+  file = specific_snapshot$snapshot$id,
+  path = temp_file1,
   overwrite = TRUE
 )
 
+# Correction to reset back to excel origin
+DaysDiff <- as.numeric(as.duration(interval(ymd("1899-12-30"), ymd("1970-01-01"))),"days")
+
 SnapshotGen <- openxlsx2::read_xlsx(
-  temp_file,
+  temp_file1,
   sheet = "ShoulderGeneral",
   colNames = TRUE,
   detectDates = TRUE
@@ -457,7 +467,7 @@ SnapshotGen <- openxlsx2::read_xlsx(
   )
 
 SnapshotRC <- openxlsx2::read_xlsx(
-  temp_file,
+  temp_file1,
   sheet = "RotatorCuff",
   colNames = TRUE,
   detectDates = TRUE
@@ -467,7 +477,7 @@ SnapshotRC <- openxlsx2::read_xlsx(
   )
 
 SnapshotGHI <- openxlsx2::read_xlsx(
-  temp_file,
+  temp_file1,
   sheet = "GlenohumeralInstability",
   colNames = TRUE,
   detectDates = TRUE
@@ -476,31 +486,16 @@ SnapshotGHI <- openxlsx2::read_xlsx(
     across(starts_with("IC"),as.character)
   )
 
+
 STROBEInput <- openxlsx2::read_xlsx(
-  temp_file,
+  temp_file1,
   sheet = "Strobe_Input",
   colNames = TRUE,
   detectDates = TRUE
-  ) |> dplyr::mutate(
-    Cohort = "Glenohumeral Instability"
   )
-
 ```
 
-```{r}
-#| label: Coerce-date
-
-SnapshotDate <- lubridate::ymd(latest_snapshot$folder_name)
-
-```
-
-```{epoxy}
-#| label: Declare-date
-
-The snapshot date was {# Format to desired format using format()
-FormattedDate <- format(SnapshotDate, "%d-%b-%Y")} and the report prepared {format(today(), "%d-%b-%Y")}. The imported data contains a dataframe of {nrow(SnapshotRC)} cases returned from the Rotator Cuff cohort, a dataframe of {nrow(SnapshotGHI)} cases returned from the Glenohumeral Instability cohort and a dataframe of {nrow(SnapshotGen)} cases from the General cohort. An additional dataframe was retrieved of {nrow(STROBEInput)} cases to generate the STROBE flow chart from the PRULO registry. 
-
-```
+Dataframes were combined into one for further analysis.
 
 ## Combine and Filter for 3 month follow up
 
@@ -512,40 +507,28 @@ The dataset was filtered to only include records with a minimum of 3 months foll
 #| code-summary: "line up input frames"
 #| warning: false
 
+SnapshotDate <- lubridate::ymd("20250331")
+
 # Combine SnapshotRC, SnapshotGH, and SnapshotGen into a single table.
 # Remove 'ExternalStudyTag', 'Email', and 'Phone' columns.
-SnapshotComb <- SnapshotRC |> dplyr::select(-(c(ExternalStudyTag,Email,Phone))) |> 
-  # Combine 'SnapshotGH' and 'SnapshotGen' tables with 'SnapshotRC' table by removing the specified columns.
-  bind_rows(dplyr::select(SnapshotGHI, -(c(ExternalStudyTag,Email,Phone)))) |> 
-  # Continue to combine tables by removing the specified columns. This time, combining 'SnapshotGen'.
+SnapshotComb <- SnapshotRC |> dplyr::select(-(c(ExternalStudyTag,Email,Phone))) |> # Combine 'SnapshotGH' and 'SnapshotGen' tables with 'SnapshotRC' table by removing the specified columns.
+  bind_rows(dplyr::select(SnapshotGHI, -(c(ExternalStudyTag,Email,Phone)))) |>  # Continue to combine tables by removing the specified columns. This time, combining 'SnapshotGen'.
   bind_rows(dplyr::select(SnapshotGen, -(c(ExternalStudyTag,Email,Phone)))) |> 
-  # Create a new column 'PatientID' based on the TreatmentID column, using 'str_split_i' function with a pattern of '.'. This means splitting the string at the first occurrence of '.', and capturing the first part (using `1` argument).
-  mutate(
+  mutate(  # Create a new column 'PatientID' based on the TreatmentID column, using 'str_split_i' function with a pattern of '.'. This means splitting the string at the first occurrence of '.', and capturing the first part (using `1` argument).
         PatientID = str_split_i(TreatmentID,"\\.",1)
-      ) |> 
-  # Move 'PatientID' column before 'TreatmentID' column.
-  relocate(
+      ) |> relocate( # Move 'PatientID' column before 'TreatmentID' column.
     PatientID, .before = TreatmentID
-  ) |> 
-  # Create a new column 'CombID' by pasting 'PatientID' and 'AffectedSide' columns.
-  mutate(
+  ) |> mutate(  # Create a new column 'CombID' by pasting 'PatientID' and 'AffectedSide' columns.
     CombID = paste0(PatientID,AffectedSide)
-  ) |> 
-  # Move 'CombID' column after 'TreatmentID' column.
-  relocate(
+  ) |> relocate(   # Move 'CombID' column after 'TreatmentID' column.
     CombID, .after = TreatmentID
-  ) |> 
-  # Move 'Cohort' column to the desired position in the table.
-  relocate(
+  ) |> relocate( # Move 'Cohort' column to the desired position in the table.
     Cohort, .before = EligibleAtPreop
   ) |> mutate(
   DurationTotal = as.numeric(as.duration(interval(ymd(DateTreatment), SnapshotDate)),"days")
-  ) 
-
-# Pause this filter - filter the index procedures with this, not the revisions
-# |> filter(
-#     DurationTotal > 89
-#   )
+  ) |> filter(
+    EligibleAtx3months == "Yes"
+  )
 
 ```
 
@@ -612,6 +595,7 @@ SnapshotCombProc <- SnapshotComb1  |>
 ```
 
 ```{r}
+#| label: process-procedures
 
 
 # This code chunk uses the `unnest_regex` function from the tidytext package to expand and transform the Procedures2 column in the SnapshotCombProc dataframe
@@ -646,7 +630,7 @@ ProcedureMaster   <- tidytext::unnest_regex(
 ```
 
 ```{r}
-
+#| label: target-procedures
 # This code chunk selects and transforms the ProcedureMaster dataframe to create a new TargetTerms dataframe
 # The goal of this operation is to identify unique target procedures (Procedures3) for each treatment UID, and store them in a Google Sheet
 
@@ -768,70 +752,21 @@ knitr::knit_print(FigProcCount)
 ```
 
 ```{r}
+#| label: update-procedures
 
-# This is a data cleaning and processing script using the dplyr package in R. The script is designed to extract specific information from a column called Procedure4, which seems to contain descriptions of surgical procedures.
-
-# Here's a high-level overview of what the script does:
-# # 
-# It creates new columns based on conditions detected in Procedure4. These conditions include:
-# Rotator cuff repair and augmentation
-# Long head biceps tendon repair, transfer, or tenotomy
-# Labrum repair, debridement, or capsulolabral reconstruction
-# Capsule ligament repair, release, or reconstruction
-# Glenoid procedures (e.g., glenoplasty, Bristow, fixation)
-
-# The script uses various str_detect and case_when functions to detect specific patterns in the Procedure4 column and assign corresponding values to the new columns.
-# 
-# Some conditions have multiple possible outcomes depending on the presence or absence of certain words or phrases in the Procedure4 description.
-
-# Goal: Create a new data frame (ProcedureMaster2) that combines information from 
-#       SnapshotComb1b and ProcedureMaster1a, and updates the RepairAugmentation column
-#       to reflect more detailed information about augmentations in the Procedure4 column
 
 ProcedureMaster2 <- left_join(
   # Filter SnapshotComb1 to only include rows with SurgicalTreatment == "Surgical"
-  SnapshotComb1 |> filter(SurgicalTreatment == "Surgical") |>
-  
-  # Select specific columns from the filtered data frame
-  dplyr::select(TreatmentID, CuffRepair2, AdjunctProcedures2, SoftTissueProcedure, RepairAugmentation, ProceduresOfInterest),
-  
-  # Summarize ProcedureMaster1a by TreatmentID and collapse unique ReplaceProcedure values into a single string separated by ";"
-  summarise(ProcedureMaster1a, 
+  SnapshotComb1 |> filter(SurgicalTreatment == "Surgical") |> dplyr::select(
+    TreatmentID, CuffRepair2, AdjunctProcedures2, SoftTissueProcedure, RepairAugmentation, ProceduresOfInterest), # Select specific columns from the filtered data frame
+  summarise(ProcedureMaster1a,    # Summarize ProcedureMaster1a by TreatmentID and collapse unique ReplaceProcedure values into a single string separated by ";"
              .by = "TreatmentID", 
              Procedure4 = str_c(str_unique(ReplaceProcedure), collapse = "; ")
-  ),
-  
-  # Specify the join relationship as one-to-one
+  ), 
   by = "TreatmentID",
-  relationship = "one-to-one"
-) |> 
-  
-#   This code chunk is building upon the previous one by continuing to transform and clean the `RepairAugmentation` column in the `ProcedureMaster2` data frame.
-# 
-# Here's a breakdown of what each line does:
-# 
-# 1. The first `mutate` statement creates a new column called `RepairAugmentation2`, which uses a series of conditional statements (`case_when`) to update the values in the original `RepairAugmentation` column based on conditions in the `Procedure4` column.
-# 
-#    - If `RepairAugmentation` is not NA or "Other" and `Procedure4` does not contain "augment*", then set `RepairAugmentation2` equal to the original value.
-#    - If `RepairAugmentation` is NA or "Other" and `Procedure4` contains "augment*", then extract the text that follows "rotator cuff repair augmentation" (using a regular expression) and store it in `RepairAugmentation2`.
-#    - If `RepairAugmentation` is not NA or "Other" and `Procedure4` contains "augment*", then concatenate the original value with the extracted text (from step 2) separated by "; ", and store the result in `RepairAugmentation2`.
-# 
-# 2. The second `mutate` statement creates a new column called `RepairAugmentation3`, which uses another series of conditional statements (`case_when`) to further transform the values in `RepairAugmentation2`. This includes:
-#    - Replacing specific text patterns (e.g., "rotator cuff repair augmentation  - biceps") with alternative text ("Autograft").
-#    - Replacing another specific text pattern (e.g., "rotator cuff repair augmentation  - superior capsular reconstruction") with a simpler term ("Superior Capsular").
-#    - Adding the text "advancement" to `RepairAugmentation2` if it contains "advancement".
-#    - Otherwise, just copying the original value.
-# 
-# 3. The third `mutate` statement creates a new column called `RepairAugmentationClean`, which uses yet another series of conditional statements (`case_when`) to clean up the values in `RepairAugmentation3`. This includes:
-#    - Replacing a specific text pattern (e.g., "Superior Capsular; Superior Capsular") with a simpler term ("Superior Capsular").
-#    - Setting "Nil" to "None" if that's what `RepairAugmentation3` is.
-#    - Otherwise, just copying the original value.
-# 
-# These transformations aim to improve the readability and consistency of the data in the `RepairAugmentation` column.
-  
-  mutate(
-  # Update RepairAugmentation column based on conditions in Procedure4 column
-  RepairAugmentation2 = case_when(
+  relationship = "one-to-one" # Specify the join relationship as one-to-one
+) |> mutate(
+  RepairAugmentation2 = case_when(   # Update RepairAugmentation column based on conditions in Procedure4 column
     (!(is.na(RepairAugmentation)) | RepairAugmentation == "Other") & !str_detect(Procedure4, "augment*") ~ RepairAugmentation,
     (is.na(RepairAugmentation) | RepairAugmentation == "Other") & str_detect(Procedure4, "augment*") ~ str_extract(Procedure4, "rotator cuff repair augmentation\\s+([^;]+)"),
     (!(is.na(RepairAugmentation)) | RepairAugmentation != "Other") & str_detect(Procedure4, "augment*") ~ str_c(RepairAugmentation, str_extract(Procedure4, "rotator cuff repair augmentation\\s+([^;]+)"), sep = "; ")
@@ -901,6 +836,7 @@ ProcedureMaster2 <- left_join(
 ```
 
 ```{r}
+#| label: adjunct-procedures
 
 # Filter out adjunct procedures from proceduremaster and then left_join into proceduremaster2
 
@@ -926,6 +862,7 @@ ProcedureAdjunct <- ProcedureMaster1 |> dplyr::select(-Entry) |> filter(
 ```
 
 ```{r}
+#| label: adjunct-proedures-2
 
 # Continue processing to extract out adjunct procedures and reinject back into procedures dataframe
 ProcedureMaster3 <- left_join(
@@ -987,6 +924,7 @@ by = "TreatmentID"
 ```
 
 ```{r}
+#| label: update-snapshot
 
 # Marry into SnapshotComb to continue processing from one dataframe
 #Adjust for labrum procedures
@@ -1072,21 +1010,25 @@ SnapshotComb2 <- SnapshotComb1a |> mutate(
 ) 
  )
 
+SnapshotCombFail <- SnapshotComb2 |> dplyr::filter(
+  TreatmentStatus == "Failed",
+  SurgicalTreatment == "Surgical"
+)
+
 # |> dplyr::mutate(
 #   factor(levels = c("<=0.5", ">0.5"), exclude = NULL)
 ```
 
 ```{r}
-#| eval: true
+#| label: write-failures
+#| eval: false
+#| include: false
 
 # Authenticate for sheets using the same token
 gs4_auth(token = drive_token())
 
 
-SnapshotCombFail <- SnapshotComb2 |> dplyr::filter(
-  TreatmentStatus == "Failed",
-  SurgicalTreatment == "Surgical"
-)
+
 
 with_gs4_quiet(googlesheets4::range_write(
   ss = SheetIDs$AuditResults,
@@ -1111,6 +1053,7 @@ with_gs4_quiet(googlesheets4::range_write(
 Read in results of manual review of failure cases and categorise subsequent treatments.
 
 ```{r}
+#| label: identify-subsequent
 
 SnapshotSubseq <- SnapshotComb2 |> dplyr::filter(
   CombID %in% SnapshotCombFail$CombID
@@ -1134,6 +1077,7 @@ SnapshotSubseq <- SnapshotComb2 |> dplyr::filter(
 ```
 
 ```{r}
+#| label: retrieve-revisions
 #| eval: true
 
 # Authenticate for sheets using the same token
@@ -1142,8 +1086,8 @@ gs4_auth(token = drive_token())
 SnapshotRevision <- googlesheets4::range_read(
   ss = SheetIDs$AuditResults,
   sheet = "Failures",
-  range = "A1:I",
-  col_types = "ccDcccDcc"
+  range = "A1:H",
+  col_types = "ccDcccDc"
 )
 
 SnapshotComb2a <- left_join(
@@ -1167,9 +1111,7 @@ SnapshotComb2a <- left_join(
       .default = ReoperationProcedure
     )
 )
-```
 
-```{r}
 SnapshotCombCheck <- SnapshotComb2a |> dplyr::select(
   TreatmentID,
   Cohort,
@@ -1178,6 +1120,7 @@ SnapshotCombCheck <- SnapshotComb2a |> dplyr::select(
   ReoperationProcedure2,
   SubsequentTx
 )
+
 ```
 
 
@@ -1187,9 +1130,9 @@ SnapshotCombCheck <- SnapshotComb2a |> dplyr::select(
 Tables were rearranged and the dataset was filtered against an ignore list created from the product configuration table. Regular expressions were used to match products of interest to intraoperative hardware information and to sum the instances of implantation for each product of interest.
 
 ```{r}
-#| label: Product-usage
+#| label: product-usage-1
 
-#Extract cases with Mitek
+#Extract cases with Mitek and remove ignore list
 
 ProductUsage1 <- SnapshotComb2a |> dplyr::select(TreatmentID,ImplantCodes) |> filter(grepl("10886",ImplantCodes))
 
@@ -1211,56 +1154,59 @@ ProductUsage2 <- separate_longer_delim(
 join_by("ImplantCodes"=="Reference")
     ) |>  dplyr::mutate(
     CustomUID = stringr::str_remove_all(paste0(Description,"_",TreatmentID,sep=""),"\\([^\\)]+\\)")
+  ) |> filter(
+  !(ImplantCodes %in% RefIgnore$ImplantIgnore)
   )
 ```
 
-<!--# Drop Product records that are on the Ignore list -->
-
-```{r}
-ProductUsage2b <-ProductUsage2 |> filter(
-  !(ImplantCodes %in% RefIgnore$ImplantIgnore)
-)
-
-```
 
  Identify the problematic codes that are not linking back to the ProductTable correctly
 
-```{epoxy}
-#| label: Product-tracking-1
-#| eval: true
+```{r}
+#| label: product-tracking-write
+#| eval: false
+#| include: false
 
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
 
-
-
-
-{ifelse(nrow(ProductUsage2b |> filter(is.na(Description)) |> arrange(ImplantCodes)) < 1,
-        epoxy::epoxy("There are no cases to flag for discrepancies."),
-        with_gs4_quiet(googlesheets4::range_write(
-          ss = SheetIDs$AuditReport,
-          data = ProductUsage2b |> filter(is.na(Description)) |> arrange(ImplantCodes),
+# Do the write operation silently
+if (nrow(ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes)) < 1) {
+  invisible(
+    googlesheets4::range_write(
+      ss = SheetIDs$AuditReport,
+          data = ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes),
           sheet = "ImplantTracking",
           range = "A1:D",
           col_names = TRUE
-        )
-        )
-)
-  }
-
-
-
+    )
+  )
+}
 
 ```
 
 ```{r}
-#
-ProductUsage3 <- ProductUsage2b |> distinct(CustomUID, .keep_all = TRUE) |> filter(grepl("10886",ImplantCodes)) |>
+#| label: product-tracking-display
+
+{if_else(nrow(ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes)) < 1,
+        "There are no cases to flag for discrepancies.", 
+        "Discrepancies identified have been added to external table."  # Empty string when data exists
+)
+}
+```
+
+
+```{r}
+#| label: product-usage-summary
+
+ProductUsage3 <- ProductUsage2 |> distinct(CustomUID, .keep_all = TRUE) |> filter(grepl("10886",ImplantCodes)) |>
   rowwise() |>
    mutate( #Swap around paste0 of TreatmentID and Description so that str_count doesnt overlap for customUIDs with other UIDs
     CustomUID = str_remove_all(paste0(Description,"_",TreatmentID,sep=""),"\\([^\\)]+\\)")
   ) |>
   rowwise() |>
   mutate(
-  ProductCount = sum(str_count(ProductUsage2b$CustomUID, CustomUID))
+  ProductCount = sum(str_count(ProductUsage2$CustomUID, CustomUID))
   ) |>
   arrange(TreatmentID,desc(ProductCount), by_group = TRUE) |>
   mutate(
@@ -1279,9 +1225,9 @@ ProductUsage3 <- ProductUsage2b |> distinct(CustomUID, .keep_all = TRUE) |> filt
 ```
 
 ```{r}
-#| label: Combine-product-procedure
+#| label: update-snapshot-procedure
 
-# i) Count unique substrings row-wise
+# Count unique substrings row-wise
 SnapshotComb3 <- left_join(
   SnapshotComb2a,
   dplyr::select(
@@ -1301,6 +1247,9 @@ SnapshotComb3 <- left_join(
 Recode Sex for report presentation.
 
 ```{r}
+#| label: update-snapshot-sex
+
+
 SnapshotComb4 <- SnapshotComb3 |> mutate(
   Sex2 = case_when(
     Sex == "F" ~ "Female",
@@ -1317,7 +1266,7 @@ SnapshotComb4 <- SnapshotComb3 |> mutate(
 The PRULO registry uses the QuickDASH [@gummesson2006] for all cases, Western Ontario Rotator Cuff Index (WORC) [@kirkley2003] for records placed into the Rotator Cuff cohort and the Western Ontario Shoulder Instability Index (WOSI) [@kirkley1998] for records placed in the Glenohumeral Instability cohort to monitor patient-reported outcomes before and after surgery at defined time intervals. The metrics utilised for each questionnaire in this report are the total score (QuickDaSH) and the normalised total score (WORC and WOSI). A single question from the WORC was also presented (Question 3 of the Physical subscale) that asks "How much weakness do you experience in your shoulder?" to observe potential patterns relevant specifically to cuff repair. PROMs entries were restricted to cases where the treatment record was "eligible" for the time point. Tables were reshaped and variables refactored, with delta variables generated (difference to baseline at each followup) to enable plotting and table generation.
 
 ```{r}
-#| label: Proms-prep
+#| label: proms-prep
 #| code-summary: "Prepare for PROMs analysis"
 #| warning: false
 
@@ -1398,6 +1347,8 @@ mutate(
 ```
 
 ```{r}
+#| label: proms-pivot-check
+#| eval: false
 # Check the lengths of columns specified in varying
 
 
@@ -1471,7 +1422,7 @@ Adverse events were monitored by near real-time chart review and surgical bookin
 
 
 ```{r}
-#| label:  Complications-intraop
+#| label:  complications-intraop
 # Slice out intraoperative complications (explants)
 # 
 # 
@@ -1493,8 +1444,6 @@ IntraopComp <- SnapshotComb4 |> dplyr::select(
 )
 
 ```
-
-
 
 
 
@@ -1542,6 +1491,8 @@ There are {nrow(SnapshotComb2a |> filter(is.na(TreatmentID)))} cases with missin
 <!--# Clean up live tables for complications. Assess date validity and correct data entry. -->
 
 ```{r}
+#| label: clean-complications
+
 mismatched_rows <- ComplicTable1[!(ComplicTable1$TreatmentID %in% SnapshotComb2$TreatmentID), ]
 
 # Remove non-matching rows from ComplicTable2
@@ -1550,6 +1501,8 @@ ComplicTable2 <- ComplicTable1 |>
 ```
 
 ```{r}
+#| label: recode-complications
+
 # Join in key data from Snapshot table to calculate additional columns
 ComplicTable3 <- left_join(
   ComplicTable2,
@@ -1638,6 +1591,7 @@ DateCheck = case_when(
 ```
 
 ```{r}
+#| label: review-complications
 
 ComplicFailCheck <- ComplicTable3 |> filter(
   !is.na(DateStatusChange)
@@ -1657,7 +1611,10 @@ ComplicFailCheck <- ComplicTable3 |> filter(
 ```{r}
 #| label: Write-complications
 #| eval: false
+#| include: false
 
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
 
 with_gs4_quiet(googlesheets4::range_write(
   ss = SheetIDs$AuditResults,
@@ -1697,6 +1654,10 @@ Intraoperative complications were reviewed manually for mechanism.
 ```{r}
 #| label: Complication-discrepancies
 #| eval: false
+#| include: false
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
 
 ComplicDiscrep <- ComplicTable3 |> filter(
   DateCheck == "Check"|
@@ -1726,6 +1687,11 @@ with_gs4_quiet(googlesheets4::range_write(
 ```{r}
 #| label: Complications-missing
 #| eval: false
+#| include: false
+
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
 
 # Comment out after first use
  # range_write(ComplicTable4,
@@ -1748,8 +1714,7 @@ with_gs4_quiet(googlesheets4::range_write(
 The diagram below summarises recruitment and categorisation of patients into the PRULO registry.
 
 ```{r}
-
-#| label: Consort-Diagram
+#| label: strobe-prep
 #| code-summary: "CONSORT|STROBE"
 
 # Inclusion
@@ -1794,7 +1759,7 @@ STROBEFlow <- STROBEInput |> dplyr::filter(
   lost_followup = case_when(
     is.na(exclusion1) & is.na(exclusion2) & TreatmentStatus == "Failed" & (ymd(DateStatusChange) < ymd(SnapshotDate)) ~ "Repair failure",
     is.na(exclusion1) & is.na(exclusion2) & TreatmentStatus == "No further followup" & (ymd(DateStatusChange) < ymd(SnapshotDate)) ~ "Patient Opt-out",
-    is.na(exclusion1) & is.na(exclusion2) & TreatmentStatus == "Ongoing" & is.na(EligibleAtx12months) ~ "Not eligible for followup"
+    is.na(exclusion1) & is.na(exclusion2) & TreatmentStatus == "Ongoing" & is.na(EligibleAtx3months) ~ "Not eligible for followup"
   ),
   mitt = if_else(
     !is.na(followup) & is.na(lost_followup),
@@ -2347,22 +2312,38 @@ FailuresRep1RC <-
 
 ```{r}
 #| label:  Failure-Report-Rep1B-Proc1
-#| eval: true
+#| eval: false
+#| include: false
 
-{ifelse(nrow(FailuresRep1RC) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = FailuresRep1RC |> arrange(TreatmentID),
-         sheet = "Failures1",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)}
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep1RC) > 0) {
+  invisible(
+    googlesheets4::range_write(
+      ss = SheetIDs$AuditReport,
+      data = FailuresRep1RC |> arrange(TreatmentID),
+      sheet = "Failures1",
+      range = "A1:P",
+      col_names = TRUE
+    )
+  )
+}
 
 
 ```
+
+
+```{r}
+#| label:  Failure-Report-Rep1B-Proc1-display
+
+{ifelse(nrow(FailuresRep1RC) == 0,
+        "There are no failures or revisions to report.",
+        ""  # Empty string when data exists
+)}
+```
+
 
 ### Adverse Events
 
@@ -2572,27 +2553,42 @@ SelectRep1RCReop <- ComplicTable3 |> filter(
 
 ```
 
+
 <!--# Write reoperations to external sheet -->
 
-```{epoxy}
-#| label: Reoperations-Report-Rep1B-Proc1
-#| eval: true
+
+```{r}
+#| label:  Reoperations-Report-Rep1B-Proc1
+#| eval: false
+#| include: false
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep1RCReop) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep1RCReop,
+ sheet = "Reoperations1",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Reoperations-Report-Rep1B-Proc1-display
 
 {ifelse(nrow(SelectRep1RCReop) == 0,
-        epoxy::epoxy("There are no reoperations or to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep1RCReop,
-         sheet = "Reoperations1",
-         range = "A1:P",
-         col_names = TRUE
-         )
-      )
-)
-      }
-
-
-
+        "There are no reoperations to report.",
+        ""  # Empty string when data exists
+)}
 ```
 
 ### Patient-Reported Outcomes
@@ -2902,6 +2898,38 @@ FailuresRep1BT <-
         )
         )
  )}
+```
+
+```{r}
+#| label:  Failure-Report-Rep1B-Proc2
+#| eval: false
+#| include: false
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep1BT) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+      ss = SheetIDs$AuditReport,
+      data = FailuresRep1BT,
+      sheet = "Failures1"
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep1B-Proc2-display
+
+{ifelse(nrow(FailuresRep1BT) == 0,
+        "There are no failures or revisions to report.",
+        ""  # Empty string when data exists
+)}
 ```
 
 <!--# # This is fun, the range needs to be at the bottom of the RC failures and go to the end of the range of the new dataframe (BT failures). The +1 represents the conversion between R dataframe and the googlesheets table.  -->
