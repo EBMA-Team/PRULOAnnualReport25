@@ -5,7 +5,7 @@ type: "website"
 number-sections: true
 number-depth: 3
 date: "2025-Apr-11"
-date-modified: "2025-Jul-23"
+date-modified: "2025-Oct-10"
 bibliography: MitekReport references.bib
 format: 
   html:
@@ -12325,7 +12325,7 @@ Product usage patterns were determined by merging multiple product datasets into
 #| label: Product-usage-summary
 
 # Second approach: Use values_fn to handle duplicates
-SelectRep <- bind_rows(
+SelectRepAll <- bind_rows(
   SelectRep1,
   SelectRep2,
   SelectRep3,
@@ -12381,17 +12381,17 @@ ReportNames <- c(
   "Orthocord Freestrand Suture"
 )
 
-SelectRepAll <- SelectRep |> dplyr::select(-TreatmentID)
+SelectRepAll1 <- SelectRepAll |> dplyr::select(-TreatmentID)
 
 # Empty dataframe to store results
-prop_table <- matrix(nrow = ncol(SelectRepAll), ncol = ncol(SelectRepAll), 0)
-dimnames(prop_table) <- list(colnames(SelectRepAll), colnames(SelectRepAll))
+prop_table <- matrix(nrow = ncol(SelectRepAll1), ncol = ncol(SelectRepAll1), 0)
+dimnames(prop_table) <- list(colnames(SelectRepAll1), colnames(SelectRepAll1))
 
 # Loop through each column and calculate proportions
-for (i in 1:ncol(SelectRepAll)) {
+for (i in 1:ncol(SelectRepAll1)) {
   # Filter data based on 1s in the current column
-  filtered_data <- SelectRepAll |> filter(
-    SelectRepAll[i] == 1
+  filtered_data <- SelectRepAll1 |> filter(
+    SelectRepAll1[i] == 1
     )  # Use !! for literal column name
   
   # Check if there are any 1s in the current column
@@ -12400,12 +12400,12 @@ for (i in 1:ncol(SelectRepAll)) {
     props <- colMeans(filtered_data[, -i])
     
     # Create a vector with 1 at the ith position and proportions elsewhere
-    prop_vec <- rep(0, ncol(SelectRepAll))
+    prop_vec <- rep(0, ncol(SelectRepAll1))
     prop_vec[i] <- 1
     prop_vec[-i] <- props
   } else {
     # Fill with NA if no 1s in the current column
-    prop_vec <- rep(NA, ncol(SelectRepAll))
+    prop_vec <- rep(NA, ncol(SelectRepAll1))
   }
   
   # Assign calculated proportions to the corresponding row in prop_table
@@ -12419,7 +12419,7 @@ rownames(prop_table) <- ReportNames
 prop_table <- as.data.frame(
   prop_table
   ) |> mutate(
-    CaseCount = colSums(SelectRepAll)
+    CaseCount = colSums(SelectRepAll1)
   ) |> relocate(
     CaseCount, .before = everything()
   ) |> gt::gt(
