@@ -497,7 +497,7 @@ STROBEInput <- openxlsx2::read_xlsx(
 
 Dataframes were combined into one for further analysis.
 
-## Combine and Filter for 3 month follow up
+## Combine and filter for 3 month follow up
 
 The dataset was filtered to only include records with a minimum of 3 months follow up at the time of analysis.
 
@@ -1261,7 +1261,7 @@ SnapshotComb4 <- SnapshotComb3 |> mutate(
 )
 ```
 
-## Prepare Patient-Reported Outcomes
+## Prepare patient-reported outcomes
 
 The PRULO registry uses the QuickDASH [@gummesson2006] for all cases, Western Ontario Rotator Cuff Index (WORC) [@kirkley2003] for records placed into the Rotator Cuff cohort and the Western Ontario Shoulder Instability Index (WOSI) [@kirkley1998] for records placed in the Glenohumeral Instability cohort to monitor patient-reported outcomes before and after surgery at defined time intervals. The metrics utilised for each questionnaire in this report are the total score (QuickDaSH) and the normalised total score (WORC and WOSI). A single question from the WORC was also presented (Question 3 of the Physical subscale) that asks "How much weakness do you experience in your shoulder?" to observe potential patterns relevant specifically to cuff repair. PROMs entries were restricted to cases where the treatment record was "eligible" for the time point. Tables were reshaped and variables refactored, with delta variables generated (difference to baseline at each followup) to enable plotting and table generation.
 
@@ -2554,11 +2554,9 @@ SelectRep1RCReop <- ComplicTable3 |> filter(
 ```
 
 
-<!--# Write reoperations to external sheet -->
-Write reoperations to external table
 
 ```{r}
-#| label:  Reoperations-Report-Rep1B-Proc1
+#| label:  Reoperations-Report-Rep1A-Proc1
 #| eval: false
 #| include: false
 
@@ -2583,12 +2581,15 @@ if (nrow(SelectRep1RCReop) > 0) {
 
 
 ```{r}
-#| label:  Reoperations-Report-Rep1B-Proc1-display
+#| label:  Reoperations-Report-Rep1A-Proc1-display
 
-{ifelse(nrow(SelectRep1RCReop) == 0,
-        "There are no reoperations to report.",
-        ""  # Empty string when data exists
-)}
+if (nrow(SelectRep1RCReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
+
+
 ```
 
 ### Patient-Reported Outcomes
@@ -3118,22 +3119,38 @@ SelectRep1BTReop <- ComplicTable3 |> filter(
 
 ```
 
-Write reoperations to external sheet
-
-```{epoxy}
-#| label:  Reoperations-Report-Rep1B-Proc2
 
 
- {ifelse(nrow(SelectRep1BTReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = SelectRep1BTReop,
-          sheet = "Reoperations1"
-        )
-        )
- )
- }
+```{r}
+#| label:  Reoperations-Report-Rep1B-write
+
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep1BTReop) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep1BTReop,
+ sheet = "Reoperations1"
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Reoperations-Report-Rep1B-display
+
+if (nrow(SelectRep1BTReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were appended to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
 
 
 ```
@@ -3818,8 +3835,8 @@ SelectRep2RCReop <- ComplicTable3 |> filter(
 
 Write reoperations to external sheet
 
-```{epoxy}
-#| label:  Reoperations-Report-Rep2B-Proc1
+```{r}
+#| label:  Reoperations-Report-Rep2A-write
 
 
 {ifelse(nrow(SelectRep2RCReop) == 0,
@@ -3833,11 +3850,41 @@ Write reoperations to external sheet
          )
       )
 )
-      }
+}
+
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep1RCReop) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep2RCReop,
+ sheet = "Reoperations2",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
 
 
 
 ```
+
+```{r}
+#| label:  Reoperations-Report-Rep2A-display
+
+if (nrow(SelectRep2RCReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
+```
+
+
 
 ### Patient-Reported Outcomes
 
@@ -4341,23 +4388,40 @@ SelectRep2BTReop <- ComplicTable3 |> filter(
 
 ```
 
-Write reoperations to external sheet
+```{r}
+#| label:  Reoperations-Report-Rep1B-write
 
-```{epoxy}
-#| label:  Reoperations-Report-Rep2B-Proc2
 
- {ifelse(nrow(SelectRep2BTReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = SelectRep2BTReop,
-          sheet = "Reoperations2"
-        )
-        )
- )
- }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep2BTReop) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep1BTReop,
+ sheet = "Reoperations2"
+    )
+  )
+}
+
 
 ```
+
+
+```{r}
+#| label:  Reoperations-Report-Rep2B-display
+
+if (nrow(SelectRep2BTReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were appended to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
+
+
+```
+
 
 ### Patient-Reported Outcomes
 
@@ -5028,26 +5092,38 @@ SelectRep3RCReop <- ComplicTable3 |> filter(
 
 ```
 
-Write reoperations to external sheet
 
-```{epoxy}
-#| label: Reoperations-Report-Rep3B-Proc1
+```{r}
+#| label:  Reoperations-Report-Rep3A-write
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep3RCReop) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep3RCReop,
+ sheet = "Reoperations3",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
 
 
+```
 
-{ifelse(nrow(SelectRep3RCReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep3RCReop,
-         sheet = "Reoperations3",
-         range = "A1:P",
-         col_names = TRUE
-         )
-      )
-)
-      }
 
+```{r}
+#| label:  Reoperations-Report-Rep3A-display
+
+if (nrow(SelectRep3RCReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
 
 
 ```
@@ -6218,26 +6294,39 @@ SelectRep4RCReop <- ComplicTable3 |> filter(
 
 ```
 
-<!--# Write reoperations to external sheet -->
-
-```{epoxy}
-#| label:  Reoperations-Report-Rep4B-Proc1
 
 
+```{r}
+#| label:  Reoperations-Report-Rep4A-write
 
-{ifelse(nrow(SelectRep4RCReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep4RCReop,
-         sheet = "Reoperations4",
-         range = "A1:P",
-         col_names = TRUE
-         )
-      )
-)
-      }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
 
+# Do the write operation silently
+if (nrow(SelectRep4RCReop) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep4RCReop,
+ sheet = "Reoperations4",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Reoperations-Report-Rep4A-display
+
+if (nrow(SelectRep4RCReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
 
 
 ```
@@ -7414,24 +7503,38 @@ SelectRep5RCReop <- ComplicTable3 |> filter(
 
 <!--# Write reoperations to external sheet -->
 
-```{epoxy}
-#| label:  Reoperations-Report-Rep5B-Proc1
+
+```{r}
+#| label:  Reoperations-Report-Rep5A-write
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep5RCReop) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep5RCReop,
+ sheet = "Reoperations5",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
 
 
+```
 
-{ifelse(nrow(SelectRep5RCReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep5RCReop,
-         sheet = "Reoperations5",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
 
+```{r}
+#| label:  Reoperations-Report-Rep5A-display
+
+if (nrow(SelectRep5RCReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
 
 
 ```
@@ -8404,7 +8507,7 @@ FailuresRep6 <-
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below. 
 
 
 ```{r}
@@ -8579,26 +8682,37 @@ SelectRep6Reop <- ComplicTable3 |> filter(
 
 ```
 
-Write reoperations to external sheet
+```{r}
+#| label:  Reoperations-Report-Rep6-write
 
-```{epoxy}
-#| label: Reoperations-Report-Rep6B-Proc1
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep6Reop) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep6Reop,
+ sheet = "Reoperations6",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
 
 
+```
 
-{ifelse(nrow(SelectRep6Reop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep6Reop,
-         sheet = "Reoperations6",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
 
+```{r}
+#| label:  Reoperations-Report-Rep6-display
+
+if (nrow(SelectRep6Reop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
 
 
 ```
@@ -9078,26 +9192,14 @@ SelectRep6BRReop <- ComplicTable3 |> filter(
 
 ```
 
-Write reoperations to external sheet
+```{r}
+#| label:  Reoperations-Report-Rep6B-display
 
-```{epoxy}
-#| label: Reoperations-Report-Rep6BRB-Proc2
-
-
-{ifelse(nrow(SelectRep6BRReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep6BRReop,
-         sheet = "Reoperations6",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
-
-
+if (nrow(SelectRep6BRReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report specific to this indication.")
+} else {
+  epoxy::epoxy_html('Reoperations appear in the <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
 
 
 ```
@@ -9716,26 +9818,40 @@ SelectRep7Reop <- ComplicTable3 |> filter(
 
 ```
 
-Write reoperations to external sheet
-
-```{epoxy}
-#| label:  Reoperations-Report-Rep7B-Proc1
+<!--# Write reoperations to external sheet -->
 
 
+```{r}
+#| label:  Reoperations-Report-Rep7-write
 
-{ifelse(nrow(SelectRep7Reop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep7Reop,
-         sheet = "Reoperations7",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
 
+# Do the write operation silently
+if (nrow(SelectRep7Reop) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep7Reop,
+ sheet = "Reoperations7",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Reoperations-Report-Rep7-display
+
+if (nrow(SelectRep7Reop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
 
 
 ```
@@ -10441,63 +10557,6 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
-## Adverse Events
-
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
-
-```{r}
-#| label: tbl-intraop-complications-8
-#| tbl-cap: "Summary of PRULO Report 8 (All) Cases - Intraoperative Events"
-
-# Check if any complications exist in filtered data
-has_complications <- SelectRep8 |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
-  nrow() > 0
-
-# Conditionally generate content
-if (!has_complications) {
-  # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
-} else {
-  # Calculate incidence and confidence intervals
-  total_cases <- nrow(SelectRep8)
-  complication_cases <- SelectRep8 |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
-    nrow()
-  
-  # Calculate proportion and 95% CI using Wilson method
-  prop_result <- binom::binom.confint(complication_cases, total_cases, 
-                                      methods = "wilson")
-  incidence_pct <- round(prop_result$mean * 100, 1)
-  ci_lower <- round(prop_result$lower * 100, 1)
-  ci_upper <- round(prop_result$upper * 100, 1)
-  
-  # Generate summary sentence
-  summary_text <- glue::glue(
-    "Intraoperative events occurred in {complication_cases} of {total_cases} cases ({incidence_pct}%, 95% CI: {ci_lower}%-{ci_upper}%)."
-  )
-  
-  # Print summary sentence
-  cat(summary_text, "\n\n")
-  
-  # Generate and return the table
-  IntraopComp |> 
-    filter(TreatmentID %in% SelectRep8$TreatmentID) |> 
-    rename(
-      Description = "ICNature2",
-      Intervention = "ICIntervention",
-      PostopManagement = "ICPostopManagement"
-    ) |> 
-    select(
-      TreatmentID,
-      Description,
-      Intervention,
-      PostopManagement
-    ) |> 
-    gt::gt()
-}
-
-```
 
 # Product Report 9 - Gryphon PEEK with Dynacord
 
@@ -10644,7 +10703,7 @@ Usage of the Product within the patient group is summarised below.
 
 ## Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below. 
 
 ```{r}
 #| label: tbl-intraop-complications-9
@@ -10699,6 +10758,169 @@ if (!has_complications) {
 }
 
 ```
+
+```{r}
+#| label: tbl-TableRep-PC-9
+#| tbl-cap: "Summary of PRULO Report 4 (Rotator Cuff) Cases - Postoperative Events"
+
+# Now create the summary table
+TableRep_PC9 <- SelectRep9 |>
+  dplyr::select(
+    Infection,
+    Ligament_Tendon,
+    Effusion,
+    Pain,
+    Hardware,
+    Loosening,
+    Instability,
+    Stiffness,
+    Neurological,
+    Thrombosis,
+    Other,
+    Reop,
+    SubsequentTx2, #Inserted to address C028 Feedback Round 1
+    #ReopDelay_Surgery
+    ) |>
+  tbl_summary(
+    label = list(
+      Ligament_Tendon ~ "Ligament|Tendon (Retear)",
+      #ReopDelay_Surgery ~ "Reoperation Delay (Weeks)",
+      
+      Reop ~ "Reoperation",
+      SubsequentTx2 ~ "Subsequent Treatment"
+      ),
+    # type = list(
+    #   ReopDelay_Surgery ~ "continuous"
+    # ),
+    statistic = list(
+      all_categorical() ~ "{p} ({n})",
+      all_continuous() ~ "{mean} ({sd})"
+    ),
+    missing = "no",) |> add_ci(
+      statistic = list(
+        all_categorical() ~ "{conf.low} - {conf.high}",
+        all_continuous() ~ "{conf.low} - {conf.high}"
+        
+      )
+    ) |> modify_table_styling(
+      columns = label,
+      rows = label == "Other",
+      footnote = "Myocardial Infarction"
+    ) |> modify_table_styling (
+      columns = label,
+      rows = label == "Subsequent Treatment",
+      footnote = "Management undertaken for procedures that have suffered tissue failure or required hardware removal or replacement"
+    ) |> modify_table_styling(
+      columns = label,
+      rows = label == "Reoperation",
+      footnote = "A theatre procedure subsequent to the index surgery that does not involve removal, replacement or modification of the construct."
+    ) 
+
+gtsummary::as_flex_table(TableRep_PC9) |> flextable::set_table_properties(
+  layout = "autofit",
+  width = 0.5,
+  align = "center",
+  opts_word = list(
+    split = TRUE
+    )
+)
+```
+
+```{r}
+#| label:  Reoperations-Report-Rep9
+
+#echo: false
+#warning: false
+
+#Previous surgery(ies) at the same site Anatomical Location 
+#Anchor 1 Anchor 2 Anchor 3 Anchor 4
+
+##Flip this around so that multiple reoperations are retained
+
+
+SelectRep9Reop <- ComplicTable3 |> filter(
+  TreatmentID %in% SelectRep9$TreatmentID,
+  `Reoperation Procedure` == "Yes"
+  ) |> group_by(TreatmentID) |> slice_min(
+    ReopDelay_Surgery,
+    n = 1
+    ) |> ungroup() |> left_join(
+      SelectRep9 |> dplyr::select(
+    TreatmentID,
+    AgeAtInitialExam,
+    Sex,
+    TreatmentType,
+    Product1,
+    Product2,
+    Product3,
+    Product4,
+    QDASH_TotalScore_Preop,
+    QDASH_TotalScore_3months,
+    QDASH_TotalScore_6months
+      ),
+    by = "TreatmentID",
+    relationship = "one-to-one"
+    ) |>
+  mutate(
+     QDASH_TotalScore_Preop = as.numeric(QDASH_TotalScore_Preop),
+     QDASH_TotalScore_3months = as.numeric(QDASH_TotalScore_3months),
+     QDASH_TotalScore_6months =as.numeric(QDASH_TotalScore_6months)
+  ) |> dplyr::select(
+    TreatmentID,
+    AgeAtInitialExam,
+    Sex,
+    TreatmentType,
+    `Complication Nature`,
+
+    EventDelay,
+    Product1,
+    Product2,
+    Product3,
+    Product4,
+    QDASH_TotalScore_Preop,
+    QDASH_TotalScore_3months,
+    QDASH_TotalScore_6months
+  ) |> mutate(
+    Procedure = "Cuff Repair"
+    ) |> arrange(
+    TreatmentID
+    )
+
+```
+
+```{r}
+#| label:  Reoperations-Report-Rep9-write
+
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep9Reop) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep9Reop,
+ sheet = "Reoperations9"
+    )
+  )
+}
+
+
+```
+
+```{r}
+#| label:  Reoperations-Report-Rep9-display
+
+if (nrow(SelectRep9Reop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
+
+
+```
+
 
 # Product Report 10 - Latarjet Screw
 
@@ -11201,7 +11423,7 @@ gtsummary::as_flex_table(TableRep104) |> flextable::set_table_properties(
 ```
 
 ```{r}
-#| label: Reoperations-Report-Rep10A-Proc1
+#| label: Reoperations-Report-Rep10A
 
 #echo: false
 #warning: false
@@ -11262,36 +11484,40 @@ SelectRep10Reop <- ComplicTable3 |> filter(
 
 ```
 
-Write reoperations to external sheet
+<!--# Write reoperations to external sheet -->
+
 
 ```{r}
-#| label: Reoperations-Report-Rep10B-Proc1-write
-#| include: false
+#| label:  Reoperations-Report-Rep10-write
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
 
 # Do the write operation silently
 if (nrow(SelectRep10Reop) > 0) {
   invisible(
     googlesheets4::range_write(
-      ss = SheetIDs$AuditReport,
-      data = SelectRep10Reop,
-      sheet = "Reoperations10",
-      range = "A1:P",
-      col_names = TRUE
+ ss = SheetIDs$AuditReport,
+ data = SelectRep10Reop,
+ sheet = "Reoperations10",
+ range = "A1:P",
+ col_names = TRUE
     )
   )
 }
+
 
 ```
 
 
 ```{r}
-#| label: Reoperations-Report-Rep10B-Proc1-display
+#| label:  Reoperations-Report-Rep10-display
 
-{ifelse(nrow(SelectRep10Reop) == 0,
-        "There are no reoperations to report.",
-        ""  # Empty string when data exists
-)}
-
+if (nrow(SelectRep10Reop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
 
 
 ```
@@ -11943,28 +12169,40 @@ SelectRep11RCReop <- ComplicTable3 |> filter(
 
 ```
 
-Write reoperations to external sheet
+<!--# Write reoperations to external sheet -->
+
 
 ```{r}
-#| label: Reoperations-Report-Rep11B-Proc1
-#| include: false
+#| label:  Reoperations-Report-Rep11-write
 
 # Authenticate for sheets using the same token
 gs4_auth(token = drive_token())
 
-{ifelse(nrow(SelectRep11RCReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep11RCReop,
-         sheet = "Reoperations11",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+# Do the write operation silently
+if (nrow(SelectRep11RCReop) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep11RCReop,
+ sheet = "Reoperations11",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
 
+
+```
+
+
+```{r}
+#| label:  Reoperations-Report-Rep11-display
+
+if (nrow(SelectRep11RCReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
 
 
 ```
