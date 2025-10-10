@@ -4389,7 +4389,7 @@ SelectRep2BTReop <- ComplicTable3 |> filter(
 ```
 
 ```{r}
-#| label:  Reoperations-Report-Rep1B-write
+#| label:  Reoperations-Report-Rep2B-write
 
 
 # Authenticate for sheets using the same token
@@ -4400,7 +4400,7 @@ if (nrow(SelectRep2BTReop) > 0) {
   invisible(
     googlesheets4::sheet_append(
  ss = SheetIDs$AuditReport,
- data = SelectRep1BTReop,
+ data = SelectRep2BTReop,
  sheet = "Reoperations2"
     )
   )
@@ -5611,21 +5611,37 @@ SelectRep3BTReop <- ComplicTable3 |> filter(
 
 ```
 
-<!--# Write reoperations to external sheet -->
+```{r}
+#| label:  Reoperations-Report-Rep3B-write
 
-```{epoxy}
-#| label:  Reoperations-Report-Rep3B-Proc2
 
- {ifelse(nrow(SelectRep3BTReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = SelectRep3BTReop,
-          sheet = "Reoperations3"
-        )
-        )
- )
- }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep3BTReop) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep3BTReop,
+ sheet = "Reoperations3"
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Reoperations-Report-Rep3B-display
+
+if (nrow(SelectRep3BTReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were appended to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
+
 
 ```
 
@@ -6754,7 +6770,7 @@ gtsummary::as_flex_table(TableRep4BT4) |> flextable::set_table_properties(
 ```
 
 ```{r}
-#| label: Reoperations-Report-Rep4A-Proc2
+#| label: Reoperations-Report-Rep4B
 
 #echo: false
 #warning: false
@@ -6815,20 +6831,37 @@ SelectRep4BTReop <- ComplicTable3 |> filter(
 
 ```
 
-<!--# Write reoperations to external sheet -->
+```{r}
+#| label:  Reoperations-Report-Rep4B-write
 
-```{epoxy}
-#| label:  Reoperations-Report-Rep4B-Proc2
 
- {ifelse(nrow(SelectRep4BTReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = SelectRep4BTReop,
-          sheet = "Reoperations4"
-        )
-        )
- )}
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep4BTReop) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep4BTReop,
+ sheet = "Reoperations4"
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Reoperations-Report-Rep4B-display
+
+if (nrow(SelectRep4BTReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were appended to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
+
 
 ```
 
@@ -8031,20 +8064,37 @@ SelectRep5BTReop <- ComplicTable3 |> filter(
 
 ```
 
-<!--# Write reoperations to external sheet -->
+```{r}
+#| label:  Reoperations-Report-Rep5B-write
 
-```{epoxy}
-#| label:  Reoperations-Report-Rep5B-Proc2
 
- {ifelse(nrow(SelectRep5BTReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = SelectRep5BTReop,
-          sheet = "Reoperations5"
-        )
-        )
- )}
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(SelectRep5BTReop) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = SelectRep5BTReop,
+ sheet = "Reoperations5"
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Reoperations-Report-Rep5B-display
+
+if (nrow(SelectRep5BTReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations were appended to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
+
 
 ```
 
@@ -9196,9 +9246,9 @@ SelectRep6BRReop <- ComplicTable3 |> filter(
 #| label:  Reoperations-Report-Rep6B-display
 
 if (nrow(SelectRep6BRReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report specific to this indication.")
+  epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations appear in the <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations are available within the <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
 }
 
 
@@ -10332,26 +10382,15 @@ SelectRep7BRReop <- ComplicTable3 |> filter(
 
 ```
 
-Write reoperations to external sheet
 
-```{epoxy}
-#| label: Reoperations-Report-Rep7BRB-Proc2
+```{r}
+#| label:  Reoperations-Report-Rep7B-display
 
-
-
-{ifelse(nrow(SelectRep7BRReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep7BRReop,
-         sheet = "Reoperations7",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
-
+if (nrow(SelectRep7BRReop) == 0) {
+  epoxy::epoxy_html("There are no reoperations to report.")
+} else {
+  epoxy::epoxy_html('Reoperations are available within the <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+}
 
 
 ```
@@ -12619,18 +12658,17 @@ ReportNames <- c(
   "Orthocord Freestrand Suture"
 )
 
-SelectRepAll1 <- SelectRepAll |> dplyr::select(-TreatmentID)
+SelectRepAll1 <- SelectRepAll |> select(-TreatmentID)
 
-# Empty dataframe to store results
+# Empty matrix to store results
 prop_table <- matrix(nrow = ncol(SelectRepAll1), ncol = ncol(SelectRepAll1), 0)
 dimnames(prop_table) <- list(colnames(SelectRepAll1), colnames(SelectRepAll1))
 
 # Loop through each column and calculate proportions
 for (i in 1:ncol(SelectRepAll1)) {
-  # Filter data based on 1s in the current column
-  filtered_data <- SelectRepAll1 |> filter(
-    SelectRepAll1[i] == 1
-    )  # Use !! for literal column name
+  # Filter data based on 1s in the current column using [[i]] to extract vector
+  filtered_data <- SelectRepAll1 |> 
+    filter(SelectRepAll1[[i]] == 1)
   
   # Check if there are any 1s in the current column
   if (nrow(filtered_data) > 0) {
@@ -12653,17 +12691,13 @@ for (i in 1:ncol(SelectRepAll1)) {
 colnames(prop_table) <- ReportNames
 rownames(prop_table) <- ReportNames
 
-# Convert matrix to data frame (optional)
-prop_table <- as.data.frame(
-  prop_table
-  ) |> mutate(
-    CaseCount = colSums(SelectRepAll1)
-  ) |> relocate(
-    CaseCount, .before = everything()
-  ) |> gt::gt(
-  rownames_to_stub = TRUE
-) |> gt::fmt_number(
-  columns = 3:15,
+# Convert matrix to data frame
+prop_table <- as.data.frame(prop_table) |> 
+  mutate(CaseCount = colSums(SelectRepAll1)) |> 
+  relocate(CaseCount, .before = everything()) |> 
+  gt::gt(rownames_to_stub = TRUE) |> 
+  gt::fmt_number(
+    columns = 3:15,
     scale_by = 100,
     decimals = 1
   )
