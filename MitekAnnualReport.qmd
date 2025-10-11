@@ -10930,17 +10930,18 @@ SelectRep9Reop <- ComplicTable3 |> filter(
 ```{r}
 #| label:  Reoperations-Report-Rep9-write
 
-
 # Authenticate for sheets using the same token
 gs4_auth(token = drive_token())
 
 # Do the write operation silently
 if (nrow(SelectRep9Reop) > 0) {
   invisible(
-    googlesheets4::sheet_append(
+    googlesheets4::range_write(
  ss = SheetIDs$AuditReport,
  data = SelectRep9Reop,
- sheet = "Reoperations9"
+ sheet = "Reoperations9",
+ range = "A1:P",
+ col_names = TRUE
     )
   )
 }
