@@ -12445,8 +12445,8 @@ Usage of the Product within the patient group is summarised below.
 #| label: Overview-Rep12
 
 {
-  if(nrow(SelectRep12) == 1) {
-    epoxy::epoxy("There is {nrow(SelectRep12)} case involving the anchor of interest. There is insufficient sample size to provide a report.")
+  if(nrow(SelectRep12) <= 1) {
+    epoxy::epoxy("There is {nrow(SelectRep12)} case involving the product of interest. There is insufficient sample size to provide a report.")
   } else {
     procedures <- unique(SelectRep12$ProcedureTotal)
     procedures <- procedures[procedures != "None" & procedures != "Unknown" & procedures != ""]
@@ -12601,6 +12601,8 @@ Product usage patterns were determined by merging multiple product datasets into
 ```{r}
 #| label: Product-usage-summary
 
+
+
 # Second approach: Use values_fn to handle duplicates
 SelectRepAll <- bind_rows(
   SelectRep1,
@@ -12622,17 +12624,29 @@ SelectRepAll <- bind_rows(
     ReportInclus = 1,
     Report = paste0("Report", Report)
   ) |>
-  dplyr::select(
+  select(
     TreatmentID,
     Report,
     ReportInclus
   ) |>
-  tidyr::pivot_wider(
+  pivot_wider(
     names_from = Report,
     values_from = ReportInclus,
     values_fill = 0,
-    values_fn = max  # This will take the maximum value when there are duplicates
+    values_fn = max
   )
+
+# Add any missing Report columns with 0s
+for (i in 1:13) {
+  col_name <- paste0("Report", i)
+  if (!col_name %in% colnames(SelectRepAll)) {
+    SelectRepAll[[col_name]] <- 0
+  }
+}
+
+# Reorder columns to ensure consistent order
+SelectRepAll <- SelectRepAll |>
+  select(TreatmentID, paste0("Report", 1:13))
 
 
 
@@ -12658,7 +12672,7 @@ ReportNames <- c(
   "Orthocord Freestrand Suture"
 )
 
-SelectRepAll1 <- SelectRepAll |> select(-TreatmentID)
+SelectRepAll1 <- SelectRepAll |> dplyr::select(-TreatmentID)
 
 # Empty matrix to store results
 prop_table <- matrix(nrow = ncol(SelectRepAll1), ncol = ncol(SelectRepAll1), 0)
@@ -12713,7 +12727,7 @@ The proportion of cases that contained hardware from different product codes was
 ```{r}
 #| label: product-usage2
 
-SelectRepSum <- SelectRep |> 
+SelectRepSum <- SelectRepAll1 |> 
   rowwise() |> 
   mutate(Sum = sum(c_across(Report1:Report13), na.rm = TRUE)) |>
   ungroup()
@@ -12771,7 +12785,7 @@ A summary table was generated to illustrate the proportion of cases where multip
 #| tbl-cap: "Summary of cross-product usage in the PRULO dataset"
 
 # Corrected approach using summarise
-summary_table <- SelectRep1 |>
+summary_table <- SelectRepSum |>
   summarise(across(Report1:Report13, list(
     Total = ~sum(.x == 1, na.rm = TRUE),
     Multiple = ~sum(.x == 1 & Sum > 1, na.rm = TRUE)
