@@ -463,7 +463,18 @@ SnapshotGen <- openxlsx2::read_xlsx(
   detectDates = TRUE
   ) |> dplyr::mutate(
     Cohort = "General",
-    across(starts_with("IC"),as.character)
+    across(starts_with("IC"),as.character),
+    Followup = as.numeric(as.duration(interval(DateTreatment, SnapshotDate)),"days"),
+    DurationStatusChange = if_else(
+      !is.na(DateStatusChange),
+      as.numeric(as.duration(interval(DateTreatment, DateStatusChange)),"days"),
+      NA,
+    ),
+    EligibleAtx3months = if_else(
+      Followup >= 56 & (is.na(DurationStatusChange) | DurationStatusChange > 105),
+      "Yes",
+      NA_character_
+    )
   )
 
 SnapshotRC <- openxlsx2::read_xlsx(
@@ -511,9 +522,9 @@ SnapshotDate <- lubridate::ymd("20250331")
 
 # Combine SnapshotRC, SnapshotGH, and SnapshotGen into a single table.
 # Remove 'ExternalStudyTag', 'Email', and 'Phone' columns.
-SnapshotComb <- SnapshotRC |> dplyr::select(-(c(ExternalStudyTag,Email,Phone))) |> # Combine 'SnapshotGH' and 'SnapshotGen' tables with 'SnapshotRC' table by removing the specified columns.
+SnapshotComb <- SnapshotRC |> dplyr::select(-(c(ExternalStudyTag,Email,Phone))) |>
   bind_rows(dplyr::select(SnapshotGHI, -(c(ExternalStudyTag,Email,Phone)))) |>  # Continue to combine tables by removing the specified columns. This time, combining 'SnapshotGen'.
-  bind_rows(dplyr::select(SnapshotGen, -(c(ExternalStudyTag,Email,Phone)))) |> 
+  bind_rows(dplyr::select(SnapshotGen, -(c(ExternalStudyTag,Email,Phone,Followup,DurationStatusChange)))) |> 
   mutate(  # Create a new column 'PatientID' based on the TreatmentID column, using 'str_split_i' function with a pattern of '.'. This means splitting the string at the first occurrence of '.', and capturing the first part (using `1` argument).
         PatientID = str_split_i(TreatmentID,"\\.",1)
       ) |> relocate( # Move 'PatientID' column before 'TreatmentID' column.
@@ -1610,7 +1621,7 @@ ComplicFailCheck <- ComplicTable3 |> filter(
 
 ```{r}
 #| label: Write-complications
-#| eval: false
+#| eval: true
 #| include: false
 
 # Authenticate for sheets using the same token
@@ -1620,7 +1631,7 @@ with_gs4_quiet(googlesheets4::range_write(
   ss = SheetIDs$AuditResults,
   data = ComplicTable3,
   sheet = "ComplicTable",
-  range = "A1:AF",
+  range = "A1:AO",
   col_names = TRUE
 )
 )
@@ -1653,7 +1664,7 @@ Intraoperative complications were reviewed manually for mechanism.
 
 ```{r}
 #| label: Complication-discrepancies
-#| eval: false
+#| eval: true
 #| include: false
 
 # Authenticate for sheets using the same token
@@ -1676,7 +1687,7 @@ with_gs4_quiet(googlesheets4::range_write(
   ss = SheetIDs$AuditResults,
   data = bind_rows(ComplicDiscrep,ComplicDiscrep2) |> arrange(TreatmentID),
   sheet = "ComplicDiscrepancy",
-  range = "A1:AD",
+  range = "A1:AO",
   col_names = TRUE
 )
 )
@@ -1686,7 +1697,7 @@ with_gs4_quiet(googlesheets4::range_write(
 
 ```{r}
 #| label: Complications-missing
-#| eval: false
+#| eval: true
 #| include: false
 
 
@@ -1787,7 +1798,7 @@ STROBEPlot <- consort::consort_plot(
     exclusion2 = "Excluded from Sample",
     followup = "Study Sample at Baseline",
     arm3 = "Diagnostic Group",
-    lost_followup = "Unavailable 12m",
+    lost_followup = "Unavailable 3m",
     mitt = "Final Analysis"),
 side_box = c(
   "exclusion1", 
