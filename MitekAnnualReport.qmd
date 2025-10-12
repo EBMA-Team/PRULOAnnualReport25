@@ -2259,7 +2259,7 @@ The mean follow up duration is {round(SelectRep1RC |> ungroup() |> summarise(mea
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-rep1RC3
@@ -2327,8 +2327,7 @@ FailuresRep1RC <-
 
 ```{r}
 #| label:  Failure-Report-Rep1A-write
-#| eval: false
-#| include: false
+#| eval: true
 
 # Authenticate for sheets using the same token
 gs4_auth(token = drive_token())
@@ -2356,7 +2355,7 @@ if (nrow(FailuresRep1RC) > 0) {
 if (nrow(FailuresRep1RC) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -2365,7 +2364,7 @@ if (nrow(FailuresRep1RC) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 ```{r}
 #| label:  Complication-Other-Rep1
@@ -2604,7 +2603,7 @@ if (nrow(SelectRep1RCReop) > 0) {
 if (nrow(SelectRep1RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -2839,8 +2838,6 @@ The mean follow up duration is {round(SelectRep1BT |> ungroup() |> summarise(mea
 
 Failure or revision events as identified in the registry for this cohort are summarised below.
 
-Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0)
-
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
 
 
@@ -2956,7 +2953,7 @@ if (nrow(FailuresRep1BT) > 0) {
 if (nrow(FailuresRep1BT) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -2968,7 +2965,7 @@ if (nrow(FailuresRep1BT) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below. 
 
 ```{r}
 #| label: tbl-intraop-complications-1B
@@ -3179,7 +3176,7 @@ if (nrow(SelectRep1BTReop) > 0) {
 if (nrow(SelectRep1BTReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -3577,7 +3574,7 @@ The mean follow up duration is {round(SelectRep2RC |> ungroup() |> summarise(mea
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-Rep2RC3
@@ -3671,7 +3668,7 @@ if (nrow(FailuresRep1RC) > 0) {
 if (nrow(FailuresRep2RC) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -3928,7 +3925,7 @@ if (nrow(SelectRep1RCReop) > 0) {
 if (nrow(SelectRep2RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 ```
 
@@ -4171,8 +4168,6 @@ The mean follow up duration is {round(SelectRep2BT |> ungroup() |> summarise(mea
 
 Failure or revision events as identified in the registry for this cohort are summarised below.
 
-Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0)
-
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
 
 ```{r}
@@ -4262,7 +4257,7 @@ if (nrow(FailuresRep2BT) > 0) {
 if (nrow(FailuresRep2BT) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -4272,7 +4267,7 @@ if (nrow(FailuresRep2BT) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 
 ```{r}
@@ -4483,7 +4478,7 @@ if (nrow(SelectRep2BTReop) > 0) {
 if (nrow(SelectRep2BTReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -4872,7 +4867,7 @@ The mean follow up duration is {round(SelectRep3RC |> ungroup() |> summarise(mea
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Failure or revision events as identified in the registry for this cohort are summarised below. 
 
 ```{r}
 #| label: tbl-Rep3RC34
@@ -4965,7 +4960,7 @@ if (nrow(FailuresRep3RC) > 0) {
 if (nrow(FailuresRep3RC) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -4973,7 +4968,7 @@ if (nrow(FailuresRep3RC) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 
 ```{r}
@@ -5207,7 +5202,7 @@ if (nrow(SelectRep3RCReop) > 0) {
 if (nrow(SelectRep3RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -5437,8 +5432,6 @@ The mean follow up duration is {round(SelectRep3BT |> ungroup() |> summarise(mea
 
 Failure or revision events as identified in the registry for this cohort are summarised below.
 
-Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit)
-
 ```{r}
 #| label: tbl-Rep3BT3
 #| tbl-cap: "Summary of PRULO Report 3 (Biceps Tenodesis) procedure survival"
@@ -5526,7 +5519,7 @@ if (nrow(FailuresRep3BT) > 0) {
 if (nrow(FailuresRep3BT) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -5534,7 +5527,7 @@ if (nrow(FailuresRep3BT) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 
 ```{r}
@@ -5744,7 +5737,7 @@ if (nrow(SelectRep3BTReop) > 0) {
 if (nrow(SelectRep3BTReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -6133,7 +6126,7 @@ The mean follow up duration is {round(SelectRep4RC |> ungroup() |> summarise(mea
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-TableRep4RC3
@@ -6227,7 +6220,7 @@ if (nrow(FailuresRep4RC) > 0) {
 if (nrow(FailuresRep4RC) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -6235,7 +6228,7 @@ if (nrow(FailuresRep4RC) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 
 ```{r}
@@ -6464,7 +6457,7 @@ if (nrow(SelectRep4RCReop) > 0) {
 if (nrow(SelectRep4RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -6693,8 +6686,6 @@ The mean follow up duration is {round(SelectRep4BT |> ungroup() |> summarise(mea
 
 Failure or revision events as identified in the registry for this cohort are summarised below.
 
-Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0)
-
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
 
 ```{r}
@@ -6785,7 +6776,7 @@ if (nrow(FailuresRep4BT) > 0) {
 if (nrow(FailuresRep4BT) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -6793,7 +6784,7 @@ if (nrow(FailuresRep4BT) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below. 
 
 
 ```{r}
@@ -7003,7 +6994,7 @@ if (nrow(SelectRep4BTReop) > 0) {
 if (nrow(SelectRep4BTReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -7396,7 +7387,7 @@ The mean follow up duration is {round(SelectRep5RC |> ungroup() |> summarise(mea
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-TableRep5RC3
@@ -7490,7 +7481,7 @@ if (nrow(FailuresRep5RC) > 0) {
 if (nrow(FailuresRep5RC) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -7498,7 +7489,7 @@ if (nrow(FailuresRep5RC) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 
 ```{r}
@@ -7728,7 +7719,7 @@ if (nrow(SelectRep5RCReop) > 0) {
 if (nrow(SelectRep5RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -7962,8 +7953,6 @@ The mean follow up duration is {round(SelectRep5BT |> ungroup() |> summarise(mea
 
 Failure or revision events as identified in the registry for this cohort are summarised below.
 
-Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0)
-
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
 
 ```{r}
@@ -8055,7 +8044,7 @@ if (nrow(FailuresRep5BT) > 0) {
 if (nrow(FailuresRep5BT) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to an <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -8063,7 +8052,7 @@ if (nrow(FailuresRep5BT) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 
 ```{r}
@@ -8274,7 +8263,7 @@ if (nrow(SelectRep5BTReop) > 0) {
 if (nrow(SelectRep5BTReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -8655,7 +8644,7 @@ The mean follow up duration is {round(SelectRep6 |> ungroup() |> summarise(mean 
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit).
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-TableRep63
@@ -8749,7 +8738,7 @@ if (nrow(FailuresRep6) > 0) {
 if (nrow(FailuresRep6) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -8961,7 +8950,7 @@ if (nrow(SelectRep6Reop) > 0) {
 if (nrow(SelectRep6Reop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -9166,7 +9155,7 @@ The mean follow up duration is {round(SelectRep6BR |> ungroup() |> summarise(mea
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit).
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-TableRep6BR3
@@ -9258,7 +9247,7 @@ if (nrow(FailuresRep6BR) > 0) {
 if (nrow(FailuresRep6BR) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -9266,7 +9255,7 @@ if (nrow(FailuresRep6BR) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 ```{r}
 #| label: tbl-intraop-complications-6B
@@ -9467,7 +9456,7 @@ SelectRep6BRReop <- ComplicTable3 |> filter(
 if (nrow(SelectRep6BRReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -9826,7 +9815,7 @@ The mean follow up duration is {round(SelectRep7 |> ungroup() |> summarise(mean 
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-TableRep73
@@ -9920,7 +9909,7 @@ if (nrow(FailuresRep7) > 0) {
 if (nrow(FailuresRep7) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -9928,7 +9917,7 @@ if (nrow(FailuresRep7) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 
 ```{r}
@@ -10137,7 +10126,7 @@ if (nrow(SelectRep7Reop) > 0) {
 if (nrow(SelectRep7Reop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -10342,7 +10331,7 @@ The mean follow up duration is {round(SelectRep7BR |> ungroup() |> summarise(mea
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-TableRep7BR3
@@ -10433,7 +10422,7 @@ if (nrow(FailuresRep7BR) > 0) {
 if (nrow(FailuresRep7BR) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to an <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -10441,7 +10430,7 @@ if (nrow(FailuresRep7BR) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 
 ```{r}
@@ -10644,7 +10633,7 @@ SelectRep7BRReop <- ComplicTable3 |> filter(
 if (nrow(SelectRep7BRReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -11210,7 +11199,7 @@ if (nrow(SelectRep9Reop) > 0) {
 if (nrow(SelectRep9Reop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -11496,7 +11485,7 @@ The mean follow up duration is {round(SelectRep10 |> ungroup() |> summarise(mean
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-TableRep103
@@ -11590,7 +11579,7 @@ if (nrow(FailuresRep10) > 0) {
 if (nrow(FailuresRep10) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -11598,7 +11587,7 @@ if (nrow(FailuresRep10) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 
 ```{r}
@@ -11829,7 +11818,7 @@ if (nrow(SelectRep10Reop) > 0) {
 if (nrow(SelectRep10Reop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -12198,7 +12187,7 @@ The mean follow up duration is {round(SelectRep11RC |> ungroup() |> summarise(me
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. Individual failure data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-TableRep11RC3
@@ -12291,7 +12280,7 @@ if (nrow(FailuresRep11RC) > 0) {
 if (nrow(FailuresRep11RC) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -12299,7 +12288,7 @@ if (nrow(FailuresRep11RC) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 
 ```{r}
@@ -12529,7 +12518,7 @@ if (nrow(SelectRep11RCReop) > 0) {
 if (nrow(SelectRep11RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
