@@ -6780,7 +6780,7 @@ if (nrow(FailuresRep4BT) > 0) {
 
 
 ```{r}
-#| label:  Failure-Report-Rep1B-display
+#| label:  Failure-Report-Rep4B-display
 
 if (nrow(FailuresRep4BT) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
