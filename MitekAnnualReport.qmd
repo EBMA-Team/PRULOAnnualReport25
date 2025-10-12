@@ -453,6 +453,8 @@ drive_download(
   overwrite = TRUE
 )
 
+SnapshotDate <- lubridate::ymd("20250331")
+
 # Correction to reset back to excel origin
 DaysDiff <- as.numeric(as.duration(interval(ymd("1899-12-30"), ymd("1970-01-01"))),"days")
 
@@ -518,7 +520,7 @@ The dataset was filtered to only include records with a minimum of 3 months foll
 #| code-summary: "line up input frames"
 #| warning: false
 
-SnapshotDate <- lubridate::ymd("20250331")
+
 
 # Combine SnapshotRC, SnapshotGH, and SnapshotGen into a single table.
 # Remove 'ExternalStudyTag', 'Email', and 'Phone' columns.
