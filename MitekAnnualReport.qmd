@@ -315,8 +315,6 @@ Generate_selectrep <- function(config_list, ProductTable, SnapshotComb4,
 }
 ```
 
-
-
 ## Import Inputs
 
 Data was imported from the PRULO registry. Configuration tables were also loaded, including the product table to describe the products of interest and list identifiers to match to surgical records. The table was modified to include a material column (PEEK or BR) and product identifiers.
@@ -443,7 +441,6 @@ specific_snapshot <- get_specific_snapshot("20250331")
 
 
 ```
-
 
 ```{r}
 temp_file1 <- tempfile(fileext = ".xlsx")
@@ -1136,8 +1133,6 @@ SnapshotCombCheck <- SnapshotComb2a |> dplyr::select(
 
 ```
 
-
-
 ## Prepare product groups of interest
 
 Tables were rearranged and the dataset was filtered against an ignore list created from the product configuration table. Regular expressions were used to match products of interest to intraoperative hardware information and to sum the instances of implantation for each product of interest.
@@ -1172,8 +1167,7 @@ join_by("ImplantCodes"=="Reference")
   )
 ```
 
-
- Identify the problematic codes that are not linking back to the ProductTable correctly
+Identify the problematic codes that are not linking back to the ProductTable correctly
 
 ```{r}
 #| label: product-tracking-write
@@ -1207,7 +1201,6 @@ if (nrow(ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes)) <
 )
 }
 ```
-
 
 ```{r}
 #| label: product-usage-summary
@@ -1428,11 +1421,9 @@ SnapshotPROM2 <- SnapshotPROM |>
 
 ```
 
-
 ## Prepare adverse events
 
 Adverse events were monitored by near real-time chart review and surgical bookings. Events were added to the registry using an electronic form and linked to the treatment records. The data import was assessed for data entry validity, differences between date of event, date of reoperation and surgery date of the index treatment were calculated to assess date validity. Additional data preparation and cleaning was performed, which included filtering and standardizing key identifiers across multiple datasets. Missing values were identified to ensure data consistency. The adverse events were attached to the treatment data with filters applied to constrain to pertinent records and time periods. Time-based metrics were calculated and classification was performed based on the event descriptions using regular expressions. Finally, it conducted data quality checks, identifying potential discrepancies and duplicate entries. After the data transformation, the revised dataset was exported to an external file for review. The code then generated multiple subset datasets, each focusing on a specific type of complication and isolating the earliest occurrence for each unique treatment. This was used for retrieval for each product report.
-
 
 ```{r}
 #| label:  complications-intraop
@@ -1457,8 +1448,6 @@ IntraopComp <- SnapshotComb4 |> dplyr::select(
 )
 
 ```
-
-
 
 ```{r}
 #| label:  Complications-postop
@@ -1491,8 +1480,6 @@ na_in_ComplicTable1 <- sum(is.na(ComplicTable1$TreatmentID))
 na_in_SnapshotComb2a <- sum(is.na(SnapshotComb2a$TreatmentID))
 
 ```
-
-
 
 ```{epoxy}
 #| eval: false
@@ -1720,7 +1707,6 @@ gs4_auth(token = drive_token())
             range = "A1:C")
  )
 ```
-
 
 # PRULO Summary
 
@@ -2323,8 +2309,6 @@ FailuresRep1RC <-
 
 ```
 
-
-
 ```{r}
 #| label:  Failure-Report-Rep1A-write
 #| eval: true
@@ -2348,7 +2332,6 @@ if (nrow(FailuresRep1RC) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep1A-display
 
@@ -2360,7 +2343,6 @@ if (nrow(FailuresRep1RC) == 0) {
 
 
 ```
-
 
 ### Adverse Events
 
@@ -2377,8 +2359,6 @@ SelectRep1Other <- SelectRep1 |> filter(
   Cohort
 )
 ```
-
-
 
 ```{r}
 #| label: tbl-intraop-complications-1A
@@ -2433,9 +2413,6 @@ if (!has_complications) {
 }
 
 ```
-
-
-
 
 ```{r}
 #| label: tbl-Rep1RC4
@@ -2570,8 +2547,6 @@ SelectRep1RCReop <- ComplicTable3 |> filter(
 
 ```
 
-
-
 ```{r}
 #| label:  Reoperations-Report-Rep1A-Proc1
 #| eval: false
@@ -2595,7 +2570,6 @@ if (nrow(SelectRep1RCReop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep1A-Proc1-display
@@ -2840,7 +2814,6 @@ Failure or revision events as identified in the registry for this cohort are sum
 
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
 
-
 ```{r}
 #| label: tbl-rept1bt3
 #| tbl-cap: "Summary of PRULO Report 1 (Biceps Tenodesis) procedure survival ("
@@ -2900,8 +2873,6 @@ FailuresRep1BT <-
 
 ```
 
-
-
 ```{r}
 #| label:  Failure-Report-Rep1B-Proc2
 #| eval: false
@@ -2946,7 +2917,6 @@ if (nrow(FailuresRep1BT) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep1B-display
 
@@ -2959,13 +2929,11 @@ if (nrow(FailuresRep1BT) == 0) {
 
 ```
 
-
-
 <!--# # This is fun, the range needs to be at the bottom of the RC failures and go to the end of the range of the new dataframe (BT failures). The +1 represents the conversion between R dataframe and the googlesheets table.  -->
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. 
+Complications and adverse events are summarised below.
 
 ```{r}
 #| label: tbl-intraop-complications-1B
@@ -3146,8 +3114,6 @@ SelectRep1BTReop <- ComplicTable3 |> filter(
 
 ```
 
-
-
 ```{r}
 #| label:  Reoperations-Report-Rep1B-write
 
@@ -3168,7 +3134,6 @@ if (nrow(SelectRep1BTReop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep1B-display
@@ -3661,7 +3626,6 @@ if (nrow(FailuresRep1RC) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep2A-display
 
@@ -3688,7 +3652,6 @@ SelectRep2Other <- SelectRep2 |> filter(
   Cohort
 )
 ```
-
 
 ```{r}
 #| label: tbl-intraop-complications-2A
@@ -3743,7 +3706,6 @@ if (!has_complications) {
 }
 
 ```
-
 
 ```{r}
 #| label: tbl-Rep2RC4
@@ -3928,8 +3890,6 @@ if (nrow(SelectRep2RCReop) == 0) {
   epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 ```
-
-
 
 ### Patient-Reported Outcomes
 
@@ -4250,7 +4210,6 @@ if (nrow(FailuresRep2BT) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep2B-display
 
@@ -4268,7 +4227,6 @@ if (nrow(FailuresRep2BT) == 0) {
 ### Adverse Events
 
 Complications and adverse events are summarised below.
-
 
 ```{r}
 #| label: tbl-intraop-complications-2B
@@ -4471,7 +4429,6 @@ if (nrow(SelectRep2BTReop) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Reoperations-Report-Rep2B-display
 
@@ -4483,7 +4440,6 @@ if (nrow(SelectRep2BTReop) == 0) {
 
 
 ```
-
 
 ### Patient-Reported Outcomes
 
@@ -4867,7 +4823,7 @@ The mean follow up duration is {round(SelectRep3RC |> ungroup() |> summarise(mea
 
 ```
 
-Failure or revision events as identified in the registry for this cohort are summarised below. 
+Failure or revision events as identified in the registry for this cohort are summarised below.
 
 ```{r}
 #| label: tbl-Rep3RC34
@@ -4953,7 +4909,6 @@ if (nrow(FailuresRep3RC) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep3A-display
 
@@ -4969,7 +4924,6 @@ if (nrow(FailuresRep3RC) == 0) {
 ### Adverse Events
 
 Complications and adverse events are summarised below.
-
 
 ```{r}
 #| label: tbl-intraop-complications-3A
@@ -5024,7 +4978,6 @@ if (!has_complications) {
 }
 
 ```
-
 
 ```{r}
 #| label:  Complication-Other-Rep3
@@ -5172,7 +5125,6 @@ SelectRep3RCReop <- ComplicTable3 |> filter(
 
 ```
 
-
 ```{r}
 #| label:  Reoperations-Report-Rep3A-write
 
@@ -5194,7 +5146,6 @@ if (nrow(SelectRep3RCReop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep3A-display
@@ -5512,7 +5463,6 @@ if (nrow(FailuresRep3BT) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep3B-display
 
@@ -5528,7 +5478,6 @@ if (nrow(FailuresRep3BT) == 0) {
 ### Adverse Events
 
 Complications and adverse events are summarised below.
-
 
 ```{r}
 #| label: tbl-intraop-complications-3B
@@ -5729,7 +5678,6 @@ if (nrow(SelectRep3BTReop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep3B-display
@@ -6213,7 +6161,6 @@ if (nrow(FailuresRep4RC) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep4A-display
 
@@ -6229,7 +6176,6 @@ if (nrow(FailuresRep4RC) == 0) {
 ### Adverse Events
 
 Complications and adverse events are summarised below.
-
 
 ```{r}
 #| label: tbl-intraop-complications-4A
@@ -6426,8 +6372,6 @@ SelectRep4RCReop <- ComplicTable3 |> filter(
 
 ```
 
-
-
 ```{r}
 #| label:  Reoperations-Report-Rep4A-write
 
@@ -6449,7 +6393,6 @@ if (nrow(SelectRep4RCReop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep4A-display
@@ -6769,7 +6712,6 @@ if (nrow(FailuresRep4BT) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep4B-display
 
@@ -6784,8 +6726,7 @@ if (nrow(FailuresRep4BT) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. 
-
+Complications and adverse events are summarised below.
 
 ```{r}
 #| label: tbl-intraop-complications-4B
@@ -6986,7 +6927,6 @@ if (nrow(SelectRep4BTReop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep4B-display
@@ -7474,7 +7414,6 @@ if (nrow(FailuresRep5RC) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep5A-display
 
@@ -7490,7 +7429,6 @@ if (nrow(FailuresRep5RC) == 0) {
 ### Adverse Events
 
 Complications and adverse events are summarised below.
-
 
 ```{r}
 #| label: tbl-intraop-complications-5A
@@ -7689,7 +7627,6 @@ SelectRep5RCReop <- ComplicTable3 |> filter(
 
 <!--# Write reoperations to external sheet -->
 
-
 ```{r}
 #| label:  Reoperations-Report-Rep5A-write
 
@@ -7711,7 +7648,6 @@ if (nrow(SelectRep5RCReop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep5A-display
@@ -8037,7 +7973,6 @@ if (nrow(FailuresRep5BT) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep5B-display
 
@@ -8053,7 +7988,6 @@ if (nrow(FailuresRep5BT) == 0) {
 ### Adverse Events
 
 Complications and adverse events are summarised below.
-
 
 ```{r}
 #| label: tbl-intraop-complications-5B
@@ -8255,7 +8189,6 @@ if (nrow(SelectRep5BTReop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep5B-display
@@ -8731,7 +8664,6 @@ if (nrow(FailuresRep6) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep6A-display
 
@@ -8746,8 +8678,7 @@ if (nrow(FailuresRep6) == 0) {
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. 
-
+Complications and adverse events are summarised below.
 
 ```{r}
 #| label: IntraopComp - Rep6A
@@ -8942,7 +8873,6 @@ if (nrow(SelectRep6Reop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep6-display
@@ -9239,7 +9169,6 @@ if (nrow(FailuresRep6BR) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Failure-Report-Rep6B-display
@@ -9902,7 +9831,6 @@ if (nrow(FailuresRep7) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep7-display
 
@@ -9918,7 +9846,6 @@ if (nrow(FailuresRep7) == 0) {
 ### Adverse Events
 
 Complications and adverse events are summarised below.
-
 
 ```{r}
 #| label: IntraopComp - Rep7A
@@ -10096,7 +10023,6 @@ SelectRep7Reop <- ComplicTable3 |> filter(
 
 <!--# Write reoperations to external sheet -->
 
-
 ```{r}
 #| label:  Reoperations-Report-Rep7-write
 
@@ -10118,7 +10044,6 @@ if (nrow(SelectRep7Reop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep7-display
@@ -10415,7 +10340,6 @@ if (nrow(FailuresRep7BR) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep7B-display
 
@@ -10431,7 +10355,6 @@ if (nrow(FailuresRep7BR) == 0) {
 ### Adverse Events
 
 Complications and adverse events are summarised below.
-
 
 ```{r}
 #| label: tbl-intraop-complications-7B
@@ -10625,7 +10548,6 @@ SelectRep7BRReop <- ComplicTable3 |> filter(
     )
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep7B-display
@@ -10840,7 +10762,6 @@ Usage of the Product within the patient group is summarised below.
 
 ```
 
-
 # Product Report 9 - Gryphon PEEK with Dynacord
 
 ## Sample Selection
@@ -10986,7 +10907,7 @@ Usage of the Product within the patient group is summarised below.
 
 ## Adverse Events
 
-Complications and adverse events are summarised below. 
+Complications and adverse events are summarised below.
 
 ```{r}
 #| label: tbl-intraop-complications-9
@@ -11204,7 +11125,6 @@ if (nrow(SelectRep9Reop) == 0) {
 
 
 ```
-
 
 # Product Report 10 - Latarjet Screw
 
@@ -11572,7 +11492,6 @@ if (nrow(FailuresRep10) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep10-display
 
@@ -11588,7 +11507,6 @@ if (nrow(FailuresRep10) == 0) {
 ### Adverse Events
 
 Complications and adverse events are summarised below.
-
 
 ```{r}
 #| label: tbl-intraop-complications-10
@@ -11788,7 +11706,6 @@ SelectRep10Reop <- ComplicTable3 |> filter(
 
 <!--# Write reoperations to external sheet -->
 
-
 ```{r}
 #| label:  Reoperations-Report-Rep10-write
 
@@ -11811,7 +11728,6 @@ if (nrow(SelectRep10Reop) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Reoperations-Report-Rep10-display
 
@@ -11823,7 +11739,6 @@ if (nrow(SelectRep10Reop) == 0) {
 
 
 ```
-
 
 ### Patient-Reported Outcomes
 
@@ -12273,7 +12188,6 @@ if (nrow(FailuresRep11RC) > 0) {
 
 ```
 
-
 ```{r}
 #| label:  Failure-Report-Rep11-display
 
@@ -12289,7 +12203,6 @@ if (nrow(FailuresRep11RC) == 0) {
 ### Adverse Events
 
 Complications and adverse events are summarised below.
-
 
 ```{r}
 #| label: tbl-intraop-complications-11A
@@ -12488,7 +12401,6 @@ SelectRep11RCReop <- ComplicTable3 |> filter(
 
 <!--# Write reoperations to external sheet -->
 
-
 ```{r}
 #| label:  Reoperations-Report-Rep11-write
 
@@ -12510,7 +12422,6 @@ if (nrow(SelectRep11RCReop) > 0) {
 
 
 ```
-
 
 ```{r}
 #| label:  Reoperations-Report-Rep11-display
@@ -12996,11 +12907,9 @@ prop_table <- as.data.frame(prop_table) |>
 
 ```
 
-
-
 ## Proportion with multiple products
 
-The proportion of cases that contained hardware from different product codes was summarised. 
+The proportion of cases that contained hardware from different product codes was summarised.
 
 ```{r}
 #| label: product-usage2
@@ -13089,4 +12998,3 @@ knitr::knit_print(summary_table)
 
 
 ```
-
