@@ -12269,11 +12269,11 @@ FailuresRep11RC <-
 gs4_auth(token = drive_token())
 
 # Do the write operation silently
-if (nrow(FailuresRep11) > 0) {
+if (nrow(FailuresRep11RC) > 0) {
   invisible(
     googlesheets4::range_write(
  ss = SheetIDs$AuditReport,
- data = FailuresRep11 |> arrange(TreatmentID),
+ data = FailuresRep11RC |> arrange(TreatmentID),
  sheet = "Failures11",
  range = "A1:P",
  col_names = TRUE
@@ -12288,7 +12288,7 @@ if (nrow(FailuresRep11) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep11-display
 
-if (nrow(FailuresRep11) == 0) {
+if (nrow(FailuresRep11RC) == 0) {
   epoxy::epoxy_html("There are no failures to report.")
 } else {
   epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
