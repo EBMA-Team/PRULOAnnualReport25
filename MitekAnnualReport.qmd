@@ -2323,8 +2323,10 @@ FailuresRep1RC <-
 
 ```
 
+
+
 ```{r}
-#| label:  Failure-Report-Rep1B-Proc1
+#| label:  Failure-Report-Rep1A-write
 #| eval: false
 #| include: false
 
@@ -2335,11 +2337,11 @@ gs4_auth(token = drive_token())
 if (nrow(FailuresRep1RC) > 0) {
   invisible(
     googlesheets4::range_write(
-      ss = SheetIDs$AuditReport,
-      data = FailuresRep1RC |> arrange(TreatmentID),
-      sheet = "Failures1",
-      range = "A1:P",
-      col_names = TRUE
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep1RC |> arrange(TreatmentID),
+ sheet = "Failures1",
+ range = "A1:P",
+ col_names = TRUE
     )
   )
 }
@@ -2349,12 +2351,15 @@ if (nrow(FailuresRep1RC) > 0) {
 
 
 ```{r}
-#| label:  Failure-Report-Rep1B-Proc1-display
+#| label:  Failure-Report-Rep1A-display
 
-{ifelse(nrow(FailuresRep1RC) == 0,
-        "There are no failures or revisions to report.",
-        ""  # Empty string when data exists
-)}
+if (nrow(FailuresRep1RC) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
+
+
 ```
 
 
@@ -2599,7 +2604,7 @@ if (nrow(SelectRep1RCReop) > 0) {
 if (nrow(SelectRep1RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -2838,7 +2843,6 @@ Individual failure data can be accessed in [Attachment 1](https://docs.google.co
 
 <!--# Is the same link still relevant or does it need to be updated for cohorts/reports? -->
 
-Table 9:
 
 ```{r}
 #| label: tbl-rept1bt3
@@ -2899,20 +2903,7 @@ FailuresRep1BT <-
 
 ```
 
-```{epoxy}
-#| label: Failure-Report-Rep1B
 
-
-{ifelse(nrow(FailuresRep1BT) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = FailuresRep1BT,
-          sheet = "Failures1"
-        )
-        )
- )}
-```
 
 ```{r}
 #| label:  Failure-Report-Rep1B-Proc2
@@ -2936,15 +2927,42 @@ if (nrow(FailuresRep1BT) > 0) {
 
 ```
 
+```{r}
+#| label:  Failure-Report-Rep1B-write
+#| eval: false
+#| include: false
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep1BT) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep1BT |> arrange(TreatmentID),
+ sheet = "Failures1"
+    )
+  )
+}
+
+
+```
+
 
 ```{r}
-#| label:  Failure-Report-Rep1B-Proc2-display
+#| label:  Failure-Report-Rep1B-display
 
-{ifelse(nrow(FailuresRep1BT) == 0,
-        "There are no failures or revisions to report.",
-        ""  # Empty string when data exists
-)}
+if (nrow(FailuresRep1BT) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
+
+
 ```
+
+
 
 <!--# # This is fun, the range needs to be at the bottom of the RC failures and go to the end of the range of the new dataframe (BT failures). The +1 represents the conversion between R dataframe and the googlesheets table.  -->
 
@@ -3071,10 +3089,9 @@ gtsummary::as_flex_table(TableRep1BT4) |> flextable::set_table_properties(
 ```
 
 ```{r}
-#| label: Reoperations-Report-Rep1A-Proc2
+#| label: Reoperations-Report-Rep1B
 
-#echo: false
-#warning: false
+
 
 #Previous surgery(ies) at the same site Anatomical Location 
 #Anchor 1 Anchor 2 Anchor 3 Anchor 4
@@ -3162,7 +3179,7 @@ if (nrow(SelectRep1BTReop) > 0) {
 if (nrow(SelectRep1BTReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were appended to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
 }
 
 
@@ -3623,28 +3640,46 @@ FailuresRep2RC <-
 
 ```
 
-```{epoxy}
-#| label:  Failure-Report-Rep2B-Proc1
+```{r}
+#| label:  Failure-Report-Rep2A-write
+#| eval: false
+#| include: false
 
-{ifelse(nrow(FailuresRep2RC) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = FailuresRep2RC |> arrange(TreatmentID),
-         sheet = "Failures2",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep1RC) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep2RC |> arrange(TreatmentID),
+ sheet = "Failures2",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep2A-display
+
+if (nrow(FailuresRep2RC) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
 
 
 ```
 
 ### Adverse Events
 
-Complications and adverse events are summarised below. Individual reoperation data can be accessed in [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit#gid=0).
+Complications and adverse events are summarised below.
 
 ```{r}
 #| label:  Complication-Other-Rep2
@@ -3670,7 +3705,7 @@ has_complications <- SelectRep2RC |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications were observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep2RC)
@@ -3893,7 +3928,7 @@ if (nrow(SelectRep1RCReop) > 0) {
 if (nrow(SelectRep2RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 ```
 
@@ -4198,20 +4233,39 @@ FailuresRep2BT <-
 
 ```
 
-```{epoxy}
-#| label:  Failure-Report-Rep2B-Proc2
+```{r}
+#| label:  Failure-Report-Rep2B-write
+#| eval: false
+#| include: false
 
- 
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
 
-{ifelse(nrow(FailuresRep2BT) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = FailuresRep2BT,
-          sheet = "Failures2"
-        )
-        )
- )}
+# Do the write operation silently
+if (nrow(FailuresRep2BT) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep2BT |> arrange(TreatmentID),
+ sheet = "Failures2"
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep2B-display
+
+if (nrow(FailuresRep2BT) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
+
+
 ```
 
 <!--# # This is fun, the range needs to be at the bottom of the RC failures and go to the end of the range of the new dataframe (BT failures). The +1 represents the conversion between R dataframe and the googlesheets table. -->
@@ -4429,7 +4483,7 @@ if (nrow(SelectRep2BTReop) > 0) {
 if (nrow(SelectRep2BTReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were appended to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -4880,21 +4934,39 @@ FailuresRep3RC <-
 
 ```
 
-```{epoxy}
-#| label: Failure-Report-Rep3B-Proc1
+```{r}
+#| label:  Failure-Report-Rep3A-write
+#| eval: false
+#| include: false
 
-{ifelse(nrow(FailuresRep3RC) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = FailuresRep3RC |> arrange(TreatmentID),
-         sheet = "Failures3",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep3RC) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep3RC |> arrange(TreatmentID),
+ sheet = "Failures3",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep3A-display
+
+if (nrow(FailuresRep3RC) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
 
 
 ```
@@ -5135,7 +5207,7 @@ if (nrow(SelectRep3RCReop) > 0) {
 if (nrow(SelectRep3RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -5425,19 +5497,39 @@ FailuresRep3BT <-
 
 ```
 
-```{epoxy}
-#| label: Failure-Report-Rep3B-Proc2
+```{r}
+#| label:  Failure-Report-Rep3B-write
+#| eval: false
+#| include: false
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep3BT) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep3BT |> arrange(TreatmentID),
+ sheet = "Failures3"
+    )
+  )
+}
 
 
- {ifelse(nrow(FailuresRep3BT) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = FailuresRep3BT,
-          sheet = "Failures3"
-        )
-        )
- )}
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep3B-display
+
+if (nrow(FailuresRep3BT) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
+
+
 ```
 
 ### Adverse Events
@@ -5652,7 +5744,7 @@ if (nrow(SelectRep3BTReop) > 0) {
 if (nrow(SelectRep3BTReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were appended to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -6104,21 +6196,39 @@ FailuresRep4RC <-
 
 ```
 
-```{epoxy}
-#| label:  Failure-Report-Rep4B-Proc1
+```{r}
+#| label:  Failure-Report-Rep4A-write
+#| eval: false
+#| include: false
 
-{ifelse(nrow(FailuresRep4RC) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = FailuresRep4RC |> arrange(TreatmentID),
-         sheet = "Failures4",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep4RC) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep4RC |> arrange(TreatmentID),
+ sheet = "Failures4",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep4A-display
+
+if (nrow(FailuresRep4RC) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
 
 
 ```
@@ -6354,7 +6464,7 @@ if (nrow(SelectRep4RCReop) > 0) {
 if (nrow(SelectRep4RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -6646,18 +6756,39 @@ FailuresRep4BT <-
 
 ```
 
-```{epoxy}
-#| label:  Failure-Report-Rep4B-Proc2
+```{r}
+#| label:  Failure-Report-Rep4B-write
+#| eval: false
+#| include: false
 
- {ifelse(nrow(FailuresRep4BT) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = FailuresRep4BT,
-          sheet = "Failures4"
-        )
-        )
- )}
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep4BT) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep4BT |> arrange(TreatmentID),
+ sheet = "Failures4"
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep1B-display
+
+if (nrow(FailuresRep4BT) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
+
+
 ```
 
 ### Adverse Events
@@ -6872,7 +7003,7 @@ if (nrow(SelectRep4BTReop) > 0) {
 if (nrow(SelectRep4BTReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were appended to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -7328,21 +7459,39 @@ FailuresRep5RC <-
 
 ```
 
-```{epoxy}
-#| label:  Failure-Report-Rep5B-Proc1
+```{r}
+#| label:  Failure-Report-Rep5A-write
+#| eval: false
+#| include: false
 
-{ifelse(nrow(FailuresRep5RC) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = FailuresRep5RC |> arrange(TreatmentID),
-         sheet = "Failures5",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep5RC) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep5RC |> arrange(TreatmentID),
+ sheet = "Failures5",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep5A-display
+
+if (nrow(FailuresRep5RC) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
 
 
 ```
@@ -7579,7 +7728,7 @@ if (nrow(SelectRep5RCReop) > 0) {
 if (nrow(SelectRep5RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -7877,19 +8026,39 @@ FailuresRep5BT <-
 
 ```
 
-```{epoxy}
-#| label:  Failure-Report-Rep5B-Proc2
+```{r}
+#| label:  Failure-Report-Rep5B-write
+#| eval: false
+#| include: false
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep5BT) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep5BT |> arrange(TreatmentID),
+ sheet = "Failures5"
+    )
+  )
+}
 
 
- {ifelse(nrow(FailuresRep5BT) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = FailuresRep5BT |> dplyr::select(-QDASH_TotalScore_3months),
-          sheet = "Failures5"
-        )
-        )
- )}
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep5B-display
+
+if (nrow(FailuresRep5BT) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to an <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
+
+
 ```
 
 ### Adverse Events
@@ -8105,7 +8274,7 @@ if (nrow(SelectRep5BTReop) > 0) {
 if (nrow(SelectRep5BTReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were appended to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -8549,21 +8718,39 @@ FailuresRep6 <-
 
 ```
 
-```{epoxy}
-#| label: Failure-Report-Rep6B-Proc1
+```{r}
+#| label:  Failure-Report-Rep6A-write
+#| eval: false
+#| include: false
 
-{ifelse(nrow(FailuresRep6) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = FailuresRep6 |> arrange(TreatmentID),
-         sheet = "Failures6",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep6) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep6 |> arrange(TreatmentID),
+ sheet = "Failures6",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep6A-display
+
+if (nrow(FailuresRep6) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
 
 
 ```
@@ -8774,7 +8961,7 @@ if (nrow(SelectRep6Reop) > 0) {
 if (nrow(SelectRep6Reop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -9042,18 +9229,37 @@ FailuresRep6BR <-
 
 ```
 
-```{epoxy }
-#| label: Failure-Report-Rep6B-Proc2
+```{r}
+#| label:  Failure-Report-Rep6B-write
+#| eval: false
+#| include: false
 
- {ifelse(nrow(FailuresRep6BR) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = FailuresRep6BR,
-          sheet = "Failures6"
-        )
-        )
- )}
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep6BR) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep6BR |> arrange(TreatmentID),
+ sheet = "Failures6"
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep6B-display
+
+if (nrow(FailuresRep6BR) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
 
 
 ```
@@ -9261,7 +9467,7 @@ SelectRep6BRReop <- ComplicTable3 |> filter(
 if (nrow(SelectRep6BRReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations are available within the <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -9683,21 +9889,39 @@ FailuresRep7 <-
 
 ```
 
-```{epoxy}
-#| label:  Failure-Report-Rep7B-Proc1
+```{r}
+#| label:  Failure-Report-Rep7A-write
+#| eval: false
+#| include: false
 
-{ifelse(nrow(FailuresRep7) == 0,
-        epoxy::epoxy("There are no failures to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = FailuresRep7 |> arrange(TreatmentID),
-         sheet = "Failures7",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep7) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep7 |> arrange(TreatmentID),
+ sheet = "Failures7",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep7-display
+
+if (nrow(FailuresRep7) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
 
 
 ```
@@ -9913,7 +10137,7 @@ if (nrow(SelectRep7Reop) > 0) {
 if (nrow(SelectRep7Reop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -10180,19 +10404,37 @@ FailuresRep7BR <-
 
 ```
 
-```{epoxy}
-#| label:  Failure-Report-Rep7B-Proc2
+```{r}
+#| label:  Failure-Report-Rep7B-write
+#| eval: false
+#| include: false
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep7BR) > 0) {
+  invisible(
+    googlesheets4::sheet_append(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep7BR |> arrange(TreatmentID),
+ sheet = "Failures7"
+    )
+  )
+}
 
 
- {ifelse(nrow(FailuresRep7BR) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-        with_gs4_quiet(sheet_append(
-          ss = SheetIDs$AuditReport,
-          data = FailuresRep7BR,
-          sheet = "Failures7"
-        )
-        )
- )}
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep7B-display
+
+if (nrow(FailuresRep7BR) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to an <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
 
 
 ```
@@ -10402,7 +10644,7 @@ SelectRep7BRReop <- ComplicTable3 |> filter(
 if (nrow(SelectRep7BRReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations are available within the <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -10968,7 +11210,7 @@ if (nrow(SelectRep9Reop) > 0) {
 if (nrow(SelectRep9Reop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -11317,21 +11559,39 @@ FailuresRep10 <-
 
 ```
 
-```{epoxy}
-#| label: Failure-Report-Rep10B-Proc1 
+```{r}
+#| label:  Failure-Report-Rep10-write
+#| eval: false
+#| include: false
 
-{ifelse(nrow(FailuresRep10) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = FailuresRep10 |> arrange(TreatmentID),
-         sheet = "Failures10",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+# Do the write operation silently
+if (nrow(FailuresRep10) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep10 |> arrange(TreatmentID),
+ sheet = "Failures10",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep10-display
+
+if (nrow(FailuresRep10) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
 
 
 ```
@@ -11569,7 +11829,7 @@ if (nrow(SelectRep10Reop) > 0) {
 if (nrow(SelectRep10Reop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
@@ -12000,24 +12260,39 @@ FailuresRep11RC <-
 
 ```
 
-```{epoxy}
-#| label: Failure-Report-Rep11B-Proc1
+```{r}
+#| label:  Failure-Report-Rep11-write
+#| eval: false
+#| include: false
 
 # Authenticate for sheets using the same token
 gs4_auth(token = drive_token())
 
-{ifelse(nrow(FailuresRep11RC) == 0,
-        epoxy::epoxy("There are no failures or revisions to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = FailuresRep11RC |> arrange(TreatmentID),
-         sheet = "Failures11",
-         range = "A1:P",
-         col_names = TRUE
-         )
-       )
-)
-  }
+# Do the write operation silently
+if (nrow(FailuresRep11) > 0) {
+  invisible(
+    googlesheets4::range_write(
+ ss = SheetIDs$AuditReport,
+ data = FailuresRep11 |> arrange(TreatmentID),
+ sheet = "Failures11",
+ range = "A1:P",
+ col_names = TRUE
+    )
+  )
+}
+
+
+```
+
+
+```{r}
+#| label:  Failure-Report-Rep11-display
+
+if (nrow(FailuresRep11) == 0) {
+  epoxy::epoxy_html("There are no failures to report.")
+} else {
+  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
+}
 
 
 ```
@@ -12254,7 +12529,7 @@ if (nrow(SelectRep11RCReop) > 0) {
 if (nrow(SelectRep11RCReop) == 0) {
   epoxy::epoxy_html("There are no reoperations to report.")
 } else {
-  epoxy::epoxy_html('Reoperations were written to an <a href="{{SheetIDs$AuditReport}}">external file</a> for further review')
+  epoxy::epoxy_html('Reoperations were written to <a href="{{SheetIDs$AuditReport}}"Attachment 1/a> for further review')
 }
 
 
