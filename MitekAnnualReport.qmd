@@ -2392,7 +2392,7 @@ has_complications <- SelectRep1RC |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep1RC)
@@ -2979,7 +2979,7 @@ has_complications <- SelectRep1BT |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep1BT)
@@ -4282,7 +4282,7 @@ has_complications <- SelectRep2BT |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep2BT)
@@ -4983,7 +4983,7 @@ has_complications <- SelectRep3RC |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep3RC)
@@ -5542,7 +5542,7 @@ has_complications <- SelectRep3BT |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep3BT)
@@ -6243,7 +6243,7 @@ has_complications <- SelectRep4RC |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep4RC)
@@ -6799,7 +6799,7 @@ has_complications <- SelectRep4BT |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep4BT)
@@ -7504,7 +7504,7 @@ has_complications <- SelectRep5RC |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep5RC)
@@ -8067,7 +8067,7 @@ has_complications <- SelectRep5BT |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep5BT)
@@ -8761,7 +8761,7 @@ has_complications <- SelectRep6 |>
 # Conditionally set chunk options and generate table
 if (has_complications == 0) {
   # If no rows, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   knitr::opts_current$set(
     label = "tbl-intraop-complications-6",
@@ -9269,7 +9269,7 @@ has_complications <- SelectRep6BR |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep6BR)
@@ -9932,7 +9932,7 @@ has_complications <- SelectRep7 |>
 # Conditionally set chunk options and generate table
 if (has_complications == 0) {
   # If no rows, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   knitr::opts_current$set(
     label = "tbl-intraop-complications-7A",
@@ -10445,7 +10445,7 @@ has_complications <- SelectRep7BR |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep7BR)
@@ -11000,7 +11000,7 @@ has_complications <- SelectRep9 |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep9)
@@ -11602,7 +11602,7 @@ has_complications <- SelectRep10 |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep10)
@@ -12303,7 +12303,7 @@ has_complications <- SelectRep11RC |>
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy("No intraoperative complications observed.")
+  epoxy_html("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep11RC)
