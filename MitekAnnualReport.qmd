@@ -80,7 +80,7 @@ To clarify terms used throughout the report, a glossary is presented below.
 +--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | WORCNorm                 | Western Ontario Rotator Cuff Index is a questionnaire specific to rotator cuff pathology and is scored as the sum of a series of 10mm visual analogue scales. A normalised score is calculated to convert the sum to a percentage score of normal (100%).                            |
 +--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| WORC Physical Question 3 | Question 3 of the Physical subscale of the WORC asks "How much weakness do you experience in your shoulder?" and is a                                                                                                                                                                |
+| WORC Physical Question 3 | Question 3 of the Physical subscale of the WORC asks "How much weakness do you experience in your shoulder?" and is a key indicator or rotator cuff integrity, especially after repair.                                                                                              |
 +--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | WOSINorm                 | Western Ontario Rotator Cuff Index is a questionnaire specific to glenohumeral instability and associated pathology and is scored as the sum of a series of 10mm visual analogue scales. A normalised score is calculated to convert the sum to a percentage score of normal (100%). |
 +--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -3840,24 +3840,8 @@ SelectRep2RCReop <- ComplicTable3 |> filter(
 
 ```
 
-Write reoperations to external sheet
-
 ```{r}
 #| label:  Reoperations-Report-Rep2A-write
-
-
-{ifelse(nrow(SelectRep2RCReop) == 0,
-        epoxy::epoxy("There are no reoperations to report."),
-       with_gs4_quiet(googlesheets4::range_write(
-         ss = SheetIDs$AuditReport,
-         data = SelectRep2RCReop,
-         sheet = "Reoperations2",
-         range = "A1:P",
-         col_names = TRUE
-         )
-      )
-)
-}
 
 
 # Authenticate for sheets using the same token
@@ -11228,7 +11212,6 @@ SelectRep10PROM1 <- SnapshotPROM1 |>
 Usage of the Product within the patient group is summarised below.
 
 ```{epoxy}
-#| label: Overview-Rep10 
 
 {
   if(nrow(SelectRep10) == 1) {
@@ -11409,7 +11392,7 @@ Failure or revision events as identified in the registry for this cohort are sum
 
 ```{r}
 #| label: tbl-TableRep103
-#| tbl-cap: "Summary of PRULO Report 10 (Rotator Cuff) - Procedure Survival"
+#| tbl-cap: "Summary of PRULO Report 10 (All) - Procedure Survival"
 
 TableRep103 <- tbl_survfit(
   survfit2(Surv(Duration, Status) ~ 1, 
@@ -11746,7 +11729,7 @@ Complete case analysis of QuickDASH and WOSI Index Normalised is summarised belo
 
 ```{r}
 #| label: fig-PROMsRep10
-#| fig-cap: "Complete case analysis of QuickDASH(Top) and WOSI Index Normalised (Bottom)."
+#| fig-cap: "Complete case analysis of QuickDASH (Top) and WOSI Index Normalised (Bottom)."
 
 
 Rep10PROM1 <- ggplot(data = SelectRep10PROM1, mapping = aes(Timepoint,QDASH)) + 
@@ -11761,13 +11744,13 @@ Rep10PROM1 / Rep10PROM2
 
 ```{r}
 #| label: tbl-TableRep105
-#| tbl-cap: " Summary of PRULO Report 10 (All) Cases - QuickDASH and WOSI"
+#| tbl-cap: "Summary of PRULO Report 10 (All) Cases - QuickDASH and WOSI"
 
 
 TableRep105 <- SelectRep10PROM1 |>
 dplyr::select(
   QDASH,
-  #QDASHDelta,
+  QDASHDelta,
   WOSINorm,
   WOSIDelta,
   Timepoint) |>
@@ -12904,6 +12887,8 @@ prop_table <- as.data.frame(prop_table) |>
     scale_by = 100,
     decimals = 1
   )
+
+knitr::knit_print(prop_table)
 
 ```
 
