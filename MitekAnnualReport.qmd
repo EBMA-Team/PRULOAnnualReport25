@@ -21,15 +21,29 @@ format:
     toc: true
     colorlinks: true
     fig_caption: yes
+    documentclass: article
+    geometry:
+      - margin=1in
+    keep-tex: false
+    include-in-header:
+      text: |
+        \usepackage{bookmark}
+    df-print: kable
+    fig-pos: 'H'
   docx: 
     toc: true
     fig-align: center
     fig_caption: yes
+    reference-doc: custom-reference.docx
+    df-print: kable
 editor: visual
 execute:
   echo: false
   warning: false
   message: false
+knitr:
+  opts_chunk:
+    out.width: "100%"
 ---
 
 # Preamble
