@@ -18,6 +18,7 @@ format:
     smooth-scroll: true
     fig_caption: yes
   pdf:
+    pdf-engine: pdflatex
     toc: true
     colorlinks: true
     fig_caption: yes
@@ -34,7 +35,6 @@ format:
     toc: true
     fig-align: center
     fig_caption: yes
-    reference-doc: custom-reference.docx
     df-print: kable
 editor: visual
 execute:
@@ -71,6 +71,7 @@ The outline of this report has been derived from the [EuroSpine Registry](https:
 # Glossary
 
 To clarify terms used throughout the report, a glossary is presented below.
+
 
 ::: {#tbl-glossary}
 +--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -115,6 +116,7 @@ Load up required packages in advance.
 
  if(!require("pacman")) install.packages("pacman")
 pacman::p_load(
+  "tinytex",
   "binom",
   "knitr",
   "cardx",
