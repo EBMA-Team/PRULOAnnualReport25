@@ -18,17 +18,15 @@ format:
     smooth-scroll: true
     fig_caption: yes
   pdf:
-    pdf-engine: pdflatex
     toc: true
     colorlinks: true
     fig_caption: yes
-    documentclass: article
-    geometry:
-      - margin=1in
     keep-tex: false
     include-in-header:
       text: |
         \usepackage{bookmark}
+    geometry:
+    - margin=1in
     df-print: kable
     fig-pos: 'H'
   docx: 
@@ -43,7 +41,8 @@ execute:
   message: false
 knitr:
   opts_chunk:
-    out.width: "100%"
+    out.width: "80%"
+
 ---
 
 # Preamble
