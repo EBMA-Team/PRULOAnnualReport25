@@ -42,7 +42,6 @@ execute:
 knitr:
   opts_chunk:
     out.width: "80%"
-
 ---
 
 # Preamble
@@ -70,7 +69,6 @@ The outline of this report has been derived from the [EuroSpine Registry](https:
 # Glossary
 
 To clarify terms used throughout the report, a glossary is presented below.
-
 
 ::: {#tbl-glossary}
 +--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -115,7 +113,6 @@ Load up required packages in advance.
 
  if(!require("pacman")) install.packages("pacman")
 pacman::p_load(
-  "tinytex",
   "binom",
   "knitr",
   "cardx",
@@ -187,6 +184,51 @@ drive_auth(cache = ".secrets", email = TRUE)
 ## Functions for Processing
 
 Include a series of functions to call later in the file for processing data imports.
+
+```{r}
+
+# Set global flextable defaults
+flextable::set_flextable_defaults(
+  # Font settings
+  font.size = 11,
+  font.family = "Arial",
+  font.color = "#000000",
+  
+  # Spacing and padding
+  padding = 3,
+  line_spacing = 1,
+  
+  # Table layout
+  table.layout = "autofit",
+  table_align = "center",
+  
+  # Borders
+  border.color = "#666666",
+  border.width = 0.5,
+  
+  # Word-specific options
+  split = TRUE,
+  keep_with_next = FALSE,
+  
+  # PDF-specific options
+  tabcolsep = 8,
+  arraystretch = 1.2,
+  
+  # Number formatting
+  big.mark = ",",
+  decimal.mark = ".",
+  digits = 2,
+  na_str = "",
+  
+  # Post-processing for header font size
+  post_process_all = function(x) {
+    x |> 
+      flextable::fontsize(size = 12, part = "header") |>
+      flextable::bold(part = "header")
+  }
+)
+
+```
 
 ```{r}
 #| label: Snapshot-folder
@@ -1210,10 +1252,17 @@ if (nrow(ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes)) <
 ```{r}
 #| label: product-tracking-display
 
-{if_else(nrow(ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes)) < 1,
-        "There are no cases to flag for discrepancies.", 
-        "Discrepancies identified have been added to external table."  # Empty string when data exists
+
+message_text <- if_else(
+  nrow(ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes)) < 1,
+  "There are no cases to flag for discrepancies.",
+  "Discrepancies identified have been added to external table."
 )
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
+} else {
+  cat(message_text, "\n")
 }
 ```
 
@@ -1809,7 +1858,7 @@ side_box = c(
   "lost_followup"
   ),
 allocation = "arm3",
-cex = 0.7
+cex = 0.6
 )
 
 knitr::knit_print(STROBEPlot)
@@ -1910,7 +1959,6 @@ TableRepB <-
 
 gtsummary::as_flex_table(TableRepB) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.15,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -2113,7 +2161,7 @@ Patient demographic, pathology, and treatment characteristics for this cohort re
 
 ```{r}
 #| label: tbl-rep1RC1pat
-#| tbl-cap: "Summary of PRULO Report 1 (Rotator Cuff) Case - Patient Characteristics"
+#| tbl-cap: "Summary of PRULO Report 1 (Rotator Cuff) - Patient Characteristics"
 
 #Dont insert chunk names into table chunks - quarto bug makes it wig out when there is a named chunk for some reason
 
@@ -2185,10 +2233,9 @@ TableRep1RC1 <- SelectRep1RC |> mutate(
 
 gtsummary::as_flex_table(TableRep1RC1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
-    split = TRUE
+    repeat_headers = TRUE
     )
 )
 
@@ -2241,7 +2288,6 @@ TableRep1RC2 <-
 
 gtsummary::as_flex_table(TableRep1RC2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.15,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -2283,7 +2329,6 @@ TableRep1RC3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep1RC3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "left",
   opts_word = list(
     split = TRUE
@@ -2491,7 +2536,6 @@ TableRep1RC4 <- SelectRep1RC |>
 
 gtsummary::as_flex_table(TableRep1RC4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -2642,7 +2686,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep1RC5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -2674,7 +2717,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep1RC6) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -2762,7 +2804,6 @@ TableRep1BT1 <-
 
 gtsummary::as_flex_table(TableRep1BT1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -2808,7 +2849,6 @@ TableRep1BT2 <-
 
 gtsummary::as_flex_table(TableRep1BT2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -2847,7 +2887,6 @@ TableRep1BT3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep1BT3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -3059,7 +3098,6 @@ TableRep1BT4 <- SelectRep1BT |>
 
 gtsummary::as_flex_table(TableRep1BT4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -3205,7 +3243,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep1BT5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -3235,7 +3272,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep1BT6) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -3477,7 +3513,6 @@ TableRep2RC1 <-
 
   gtsummary::as_flex_table(TableRep2RC1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -3535,7 +3570,6 @@ TableRep2RC2 <-
 
   gtsummary::as_flex_table(TableRep2RC2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -3574,7 +3608,6 @@ TableRep2RC3 <- tbl_survfit(
 
   gtsummary::as_flex_table(TableRep2RC3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -3784,7 +3817,6 @@ TableRep2RC4 <- SelectRep2RC |>
   
   gtsummary::as_flex_table(TableRep2RC4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -3940,7 +3972,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep2RC5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -3971,7 +4002,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep2RC6) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -4059,7 +4089,6 @@ TableRep2BT1 <-
 
 gtsummary::as_flex_table(TableRep2BT1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -4106,7 +4135,6 @@ TableRep2BT2 <-
 
 gtsummary::as_flex_table(TableRep2BT2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -4147,7 +4175,6 @@ TableRep2BT3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep2BT3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -4336,7 +4363,6 @@ TableRep2BT4 <- SelectRep2BT |>
 
 gtsummary::as_flex_table(TableRep2BT4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -4481,7 +4507,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep2BT5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.7,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -4511,7 +4536,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep2BT6) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.7,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -4747,7 +4771,6 @@ TableRep3RC1 <-
 
 gtsummary::as_flex_table(TableRep3RC1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -4804,7 +4827,6 @@ TableRep3RC2 <-
 
 gtsummary::as_flex_table(TableRep3RC2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -4842,7 +4864,6 @@ TableRep3RC3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep3RC3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -5052,7 +5073,6 @@ TableRep3RC4 <- SelectRep3RC |>
 
 gtsummary::as_flex_table(TableRep3RC4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -5201,7 +5221,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep3RC5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -5230,7 +5249,6 @@ tbl_summary(by = "Timepoint",
   
 gtsummary::as_flex_table(TableRep3RC6) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -5317,7 +5335,6 @@ TableRep3BT1 <-
 
 gtsummary::as_flex_table(TableRep3BT1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -5363,7 +5380,6 @@ TableRep3BT2 <-
   
  gtsummary::as_flex_table(TableRep3BT2) |> flextable::set_table_properties(
    layout = "autofit",
-   width = 0.15,
    align = "center",
    opts_word = list(
    split = TRUE
@@ -5400,7 +5416,6 @@ TableRep3BT3 <- tbl_survfit(
 
  gtsummary::as_flex_table(TableRep3BT3) |> flextable::set_table_properties(
    layout = "autofit",
-   width = 0.5,
    align = "center",
    opts_word = list(
      split = TRUE
@@ -5587,7 +5602,6 @@ TableRep3BT4 <- SelectRep3BT |>
 
 gtsummary::as_flex_table(TableRep3BT4) |> flextable::set_table_properties(
    layout = "autofit",
-   width = 0.15,
    align = "center",
    opts_word = list(
      split = TRUE
@@ -5733,7 +5747,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep3BT5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -5764,7 +5777,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep3BT6) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
   split = TRUE
@@ -5999,7 +6011,6 @@ TableRep4RC1 <-
 
 gtsummary::as_flex_table(TableRep4RC1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -6055,7 +6066,6 @@ TableRep4RC2 <-
 
 gtsummary::as_flex_table(TableRep4RC2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -6093,7 +6103,6 @@ TableRep4RC3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep4RC3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -6301,7 +6310,6 @@ TableRep4RC4 <- SelectRep4RC |>
 
 gtsummary::as_flex_table(TableRep4RC4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -6448,7 +6456,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep4RC5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -6476,7 +6483,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep4RC6) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -6563,7 +6569,6 @@ TableRep4BT1 <-
 
 gtsummary::as_flex_table(TableRep4BT1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -6609,7 +6614,6 @@ TableRep4BT2 <-
 
 gtsummary::as_flex_table(TableRep4BT2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -6648,7 +6652,6 @@ TableRep4BT3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep4BT3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -6836,7 +6839,6 @@ TableRep4BT4 <- SelectRep4BT |>
 
 gtsummary::as_flex_table(TableRep4BT4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -6984,7 +6986,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep4BT5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -7014,7 +7015,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep4BT6) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -7251,7 +7251,6 @@ TableRep5RC1 <-
 
 gtsummary::as_flex_table(TableRep5RC1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -7307,7 +7306,6 @@ TableRep5RC2 <-
 
 gtsummary::as_flex_table(TableRep5RC2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -7346,7 +7344,6 @@ TableRep5RC3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep5RC3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -7554,7 +7551,6 @@ TableRep5RC4 <- SelectRep5RC |>
 
 gtsummary::as_flex_table(TableRep5RC4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -7704,7 +7700,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep5RC5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -7736,7 +7731,6 @@ dplyr::select(
 
 gtsummary::as_flex_table(TableRep5RC6) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -7823,7 +7817,6 @@ TableRep5BT1 <-
 
 gtsummary::as_flex_table(TableRep5BT1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -7869,7 +7862,6 @@ TableRep5BT2 <-
 
 gtsummary::as_flex_table(TableRep5BT2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -7909,7 +7901,6 @@ TableRep5BT3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep5BT3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -8097,7 +8088,6 @@ TableRep5BT4 <- SelectRep5BT |>
 
 gtsummary::as_flex_table(TableRep5BT4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -8245,7 +8235,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep5BT5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -8275,7 +8264,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep5BT6) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -8514,7 +8502,6 @@ TableRep61 <-
 
 gtsummary::as_flex_table(TableRep61) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -8558,7 +8545,6 @@ TableRep62 <-
 
 gtsummary::as_flex_table(TableRep62) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -8596,7 +8582,6 @@ TableRep63 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep63) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -8781,7 +8766,6 @@ TableRep64 <- SelectRep6 |>
 
 gtsummary::as_flex_table(TableRep64) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -8929,7 +8913,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep65) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -9018,7 +9001,6 @@ TableRep6BR1 <-
 
 gtsummary::as_flex_table(TableRep6BR1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -9066,7 +9048,6 @@ TableRep6BR2 <-
 
 gtsummary::as_flex_table(TableRep6BR2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -9104,7 +9085,6 @@ TableRep6BR3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep6BR3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -9307,7 +9287,6 @@ TableRep6BR4 <- SelectRep6BR |>
 
 gtsummary::as_flex_table(TableRep6BR4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -9434,7 +9413,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep6BR5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -9675,7 +9653,6 @@ TableRep71 <-
 
 gtsummary::as_flex_table(TableRep71) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -9724,7 +9701,6 @@ TableRep72 <-
 
 gtsummary::as_flex_table(TableRep72) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -9763,7 +9739,6 @@ TableRep73 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep73) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -9948,7 +9923,6 @@ TableRep74 <- SelectRep7 |>
 
 gtsummary::as_flex_table(TableRep74) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -10101,7 +10075,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep75) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -10188,7 +10161,6 @@ TableRep7BR1 <-
 
 gtsummary::as_flex_table(TableRep7BR1) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -10237,7 +10209,6 @@ TableRep7BR2 <-
 
 gtsummary::as_flex_table(TableRep7BR2) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -10275,7 +10246,6 @@ TableRep7BR3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep7BR3) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -10478,7 +10448,6 @@ TableRep7BR4 <- SelectRep7BR |>
 
 gtsummary::as_flex_table(TableRep7BR4) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -10604,7 +10573,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep7BR5) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -11021,7 +10989,6 @@ TableRep_PC9 <- SelectRep9 |>
 
 gtsummary::as_flex_table(TableRep_PC9) |> flextable::set_table_properties(
   layout = "autofit",
-  width = 0.5,
   align = "center",
   opts_word = list(
     split = TRUE
@@ -11330,7 +11297,6 @@ TableRep101 <-
 
 gtsummary::as_flex_table(TableRep101) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
@@ -11384,7 +11350,6 @@ TableRep102 <-
 
 gtsummary::as_flex_table(TableRep102) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
@@ -11424,7 +11389,6 @@ TableRep103 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep103) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
@@ -11633,7 +11597,6 @@ TableRep104 <- SelectRep10 |>
 
 gtsummary::as_flex_table(TableRep104) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
@@ -11782,7 +11745,6 @@ tbl_summary(by = "Timepoint",
 
 gtsummary::as_flex_table(TableRep105) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
@@ -12028,7 +11990,6 @@ TableRep11RC1 <-
 
 gtsummary::as_flex_table(TableRep11RC1) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
@@ -12083,7 +12044,6 @@ TableRep11RC2 <-
 
 gtsummary::as_flex_table(TableRep11RC2) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
@@ -12120,7 +12080,6 @@ TableRep11RC3 <- tbl_survfit(
 
 gtsummary::as_flex_table(TableRep11RC3) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
@@ -12327,7 +12286,6 @@ TableRep11RC4 <- SelectRep11RC |>
 
  gtsummary::as_flex_table(TableRep11RC4) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
@@ -12478,7 +12436,6 @@ tbl_summary(by = "Timepoint",
   
   gtsummary::as_flex_table(TableRep11RC5) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
@@ -12506,7 +12463,6 @@ tbl_summary(by = "Timepoint",
 
  gtsummary::as_flex_table(TableRep11RC6) |> flextable::set_table_properties(
     layout = "autofit",
-    width = 0.5,
     align = "center",
     opts_word = list(
       split = TRUE)
