@@ -18,30 +18,24 @@ format:
     smooth-scroll: true
     fig_caption: yes
   pdf:
+    documentclass: scrartcl
+    classoption:
+      - DIV=11
+      - numbers=noendperiod
+    papersize: a4        # Changed from letter
+    pdf-engine: xelatex
     toc: true
+    number-sections: true
+    number-depth: 3
     colorlinks: true
-    fig_caption: yes
-    keep-tex: false
-    include-in-header:
-      text: |
-        \usepackage{bookmark}
-    geometry:
-    - margin=1in
-    df-print: kable
-    fig-pos: 'H'
-  docx: 
-    toc: true
-    fig-align: center
-    fig_caption: yes
-    df-print: kable
+    keep-tex: false      # Set to true only if debugging
+    header-includes:
+      - '\KOMAoption{captions}{tableheading}'
 editor: visual
 execute:
   echo: false
   warning: false
   message: false
-knitr:
-  opts_chunk:
-    out.width: "80%"
 ---
 
 # Preamble
@@ -185,50 +179,6 @@ drive_auth(cache = ".secrets", email = TRUE)
 
 Include a series of functions to call later in the file for processing data imports.
 
-```{r}
-
-# Set global flextable defaults
-flextable::set_flextable_defaults(
-  # Font settings
-  font.size = 11,
-  font.family = "Arial",
-  font.color = "#000000",
-  
-  # Spacing and padding
-  padding = 3,
-  line_spacing = 1,
-  
-  # Table layout
-  table.layout = "autofit",
-  table_align = "center",
-  
-  # Borders
-  border.color = "#666666",
-  border.width = 0.5,
-  
-  # Word-specific options
-  split = TRUE,
-  keep_with_next = FALSE,
-  
-  # PDF-specific options
-  tabcolsep = 8,
-  arraystretch = 1.2,
-  
-  # Number formatting
-  big.mark = ",",
-  decimal.mark = ".",
-  digits = 2,
-  na_str = "",
-  
-  # Post-processing for header font size
-  post_process_all = function(x) {
-    x |> 
-      flextable::fontsize(size = 12, part = "header") |>
-      flextable::bold(part = "header")
-  }
-)
-
-```
 
 ```{r}
 #| label: Snapshot-folder
@@ -593,7 +543,7 @@ SnapshotComb <- SnapshotRC |> dplyr::select(-(c(ExternalStudyTag,Email,Phone))) 
     Cohort, .before = EligibleAtPreop
   ) |> mutate(
   DurationTotal = as.numeric(as.duration(interval(ymd(DateTreatment), SnapshotDate)),"days")
-  ) |> filter(
+  ) |> dplyr::filter(
     EligibleAtx3months == "Yes"
   )
 
@@ -656,7 +606,7 @@ SnapshotComb1  <- SnapshotComb |>
 #
 SnapshotCombProc <- SnapshotComb1  |> 
   # Use the 'filter' function from dplyr to apply a filter condition to the dataframe
-  filter( 
+  dplyr::filter( 
     str_length(Procedures2)  > 0
   )
 ```
@@ -743,7 +693,7 @@ ProcedureMaster1 <- ProcedureMaster |> left_join(
   ) |> 
   
   # Filter out rows with NA values in ReplaceProcedure and rows where ReplaceProcedure is "none"
-  filter(!is.na(ReplaceProcedure), !(ReplaceProcedure == "none")) |> 
+  dplyr::filter(!is.na(ReplaceProcedure), !(ReplaceProcedure == "none")) |> 
   
   # Group the data by TreatmentID
   group_by(TreatmentID) |> 
@@ -751,8 +701,8 @@ ProcedureMaster1 <- ProcedureMaster |> left_join(
   # Remove duplicates while keeping all columns (including non-unique ones)
   distinct(ReplaceProcedure, .keep_all = TRUE) |> 
   
-  # Filter out rows where ReplaceProcedure contains certain strings
-  filter(str_detect(ReplaceProcedure, "slap|bankart|augment*", negate = TRUE)) |> 
+  # dplyr::filter out rows where ReplaceProcedure contains certain strings
+  dplyr::filter(str_detect(ReplaceProcedure, "slap|bankart|augment*", negate = TRUE)) |> 
   
   # Create a new column called Entry and order the data by this column
   mutate(Entry = str_order(ReplaceProcedure)) |> 
@@ -771,7 +721,7 @@ ProcedureMaster1a <- ProcedureMaster |>
   ) |> 
   
   # Filter out rows with NA values in ReplaceProcedure and rows where ReplaceProcedure is "none"
-  filter(!is.na(ReplaceProcedure), !(ReplaceProcedure == "none")) |> 
+  dplyr::filter(!is.na(ReplaceProcedure), !(ReplaceProcedure == "none")) |> 
   
   # Group the data by TreatmentID
   group_by(TreatmentID) |> 
@@ -800,7 +750,7 @@ FigProcCount  <- ProcedureMaster1  |>
   count(ReplaceProcedure, sort = TRUE)  |> 
   
    # Filter out procedures with only one occurrence
-  filter(n > 1)  |> 
+  dplyr::filter(n > 1)  |> 
   
    # Create a new column called ReplaceProcedure and reorder it based on the count of each procedure
   mutate(ReplaceProcedure = reorder(ReplaceProcedure, n))  |> 
@@ -824,7 +774,7 @@ knitr::knit_print(FigProcCount)
 
 ProcedureMaster2 <- left_join(
   # Filter SnapshotComb1 to only include rows with SurgicalTreatment == "Surgical"
-  SnapshotComb1 |> filter(SurgicalTreatment == "Surgical") |> dplyr::select(
+  SnapshotComb1 |> dplyr::filter(SurgicalTreatment == "Surgical") |> dplyr::select(
     TreatmentID, CuffRepair2, AdjunctProcedures2, SoftTissueProcedure, RepairAugmentation, ProceduresOfInterest), # Select specific columns from the filtered data frame
   summarise(ProcedureMaster1a,    # Summarize ProcedureMaster1a by TreatmentID and collapse unique ReplaceProcedure values into a single string separated by ";"
              .by = "TreatmentID", 
@@ -1199,7 +1149,7 @@ Tables were rearranged and the dataset was filtered against an ignore list creat
 
 #Extract cases with Mitek and remove ignore list
 
-ProductUsage1 <- SnapshotComb2a |> dplyr::select(TreatmentID,ImplantCodes) |> filter(grepl("10886",ImplantCodes))
+ProductUsage1 <- SnapshotComb2a |> dplyr::select(TreatmentID,ImplantCodes) |> dplyr::filter(grepl("10886",ImplantCodes))
 
 # Trim whitespace
 ProductUsage1$ImplantCodes <- trimws(ProductUsage1$ImplantCodes)
@@ -1219,7 +1169,7 @@ ProductUsage2 <- separate_longer_delim(
 join_by("ImplantCodes"=="Reference")
     ) |>  dplyr::mutate(
     CustomUID = stringr::str_remove_all(paste0(Description,"_",TreatmentID,sep=""),"\\([^\\)]+\\)")
-  ) |> filter(
+  ) |> dplyr::filter(
   !(ImplantCodes %in% RefIgnore$ImplantIgnore)
   )
 ```
@@ -1235,11 +1185,11 @@ Identify the problematic codes that are not linking back to the ProductTable cor
 gs4_auth(token = drive_token())
 
 # Do the write operation silently
-if (nrow(ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes)) < 1) {
+if (nrow(ProductUsage2 |> dplyr::filter(is.na(Description)) |> arrange(ImplantCodes)) < 1) {
   invisible(
     googlesheets4::range_write(
       ss = SheetIDs$AuditReport,
-          data = ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes),
+          data = ProductUsage2 |> dplyr::filter(is.na(Description)) |> arrange(ImplantCodes),
           sheet = "ImplantTracking",
           range = "A1:D",
           col_names = TRUE
@@ -1254,7 +1204,7 @@ if (nrow(ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes)) <
 
 
 message_text <- if_else(
-  nrow(ProductUsage2 |> filter(is.na(Description)) |> arrange(ImplantCodes)) < 1,
+  nrow(ProductUsage2 |> dplyr::filter(is.na(Description)) |> arrange(ImplantCodes)) < 1,
   "There are no cases to flag for discrepancies.",
   "Discrepancies identified have been added to external table."
 )
@@ -1269,7 +1219,7 @@ if (knitr::is_html_output()) {
 ```{r}
 #| label: product-usage-summary
 
-ProductUsage3 <- ProductUsage2 |> distinct(CustomUID, .keep_all = TRUE) |> filter(grepl("10886",ImplantCodes)) |>
+ProductUsage3 <- ProductUsage2 |> distinct(CustomUID, .keep_all = TRUE) |> dplyr::filter(grepl("10886",ImplantCodes)) |>
   rowwise() |>
    mutate( #Swap around paste0 of TreatmentID and Description so that str_count doesnt overlap for customUIDs with other UIDs
     CustomUID = str_remove_all(paste0(Description,"_",TreatmentID,sep=""),"\\([^\\)]+\\)")
@@ -1457,7 +1407,7 @@ SnapshotPROM1 <- SnapshotPROM |>
   mutate(Timepoint = forcats::fct(
     Timepoint, 
     levels = c("Preop", "3m", "6m", "12m"))
-    ) |> filter(!is.na(Eligible)) |> rename(
+    ) |> dplyr::filter(!is.na(Eligible)) |> rename(
       QDASHDelta = "DeltaQ"
     )
 
@@ -1481,7 +1431,7 @@ SnapshotPROM2 <- SnapshotPROM |>
   mutate(Timepoint = forcats::fct(
     Timepoint, 
     levels = c("Preop", "6m", "12m"))
-    ) |> filter(!is.na(Eligible))
+    ) |> dplyr::filter(!is.na(Eligible))
 
 ```
 
@@ -1501,7 +1451,7 @@ IntraopComp <- SnapshotComb4 |> dplyr::select(
   SurgicalTreatment,
   TreatmentStatus,
   ICCount:ICIntervention
-) |> filter(
+) |> dplyr::filter(
   !is.na(ICCount)
 ) |> mutate(
   ICNature2 = if_else(
@@ -1548,7 +1498,7 @@ na_in_SnapshotComb2a <- sum(is.na(SnapshotComb2a$TreatmentID))
 ```{epoxy}
 #| eval: false
 
-There are {nrow(SnapshotComb2a |> filter(is.na(TreatmentID)))} cases with missing TreatmentID in the dataset and {nrow(ComplicTable1 |> filter(is.na(TreatmentID)))} missing in the complications table.
+There are {nrow(SnapshotComb2a |> dplyr::filter(is.na(TreatmentID)))} cases with missing TreatmentID in the dataset and {nrow(ComplicTable1 |> filter(is.na(TreatmentID)))} missing in the complications table.
 
 ```
 
@@ -1561,7 +1511,7 @@ mismatched_rows <- ComplicTable1[!(ComplicTable1$TreatmentID %in% SnapshotComb2$
 
 # Remove non-matching rows from ComplicTable2
 ComplicTable2 <- ComplicTable1 |>
-  filter(!(TreatmentID %in% mismatched_rows$TreatmentID))
+  dplyr::filter(!(TreatmentID %in% mismatched_rows$TreatmentID))
 ```
 
 ```{r}
@@ -1578,7 +1528,7 @@ ComplicTable3 <- left_join(
   ),
   by = "TreatmentID"
 ) |> 
-  filter(
+  dplyr::filter(
     !is.na(DateTreatment) & `Complication Occurrence` != "No"
   ) |>
   mutate(
@@ -1657,7 +1607,7 @@ DateCheck = case_when(
 ```{r}
 #| label: review-complications
 
-ComplicFailCheck <- ComplicTable3 |> filter(
+ComplicFailCheck <- ComplicTable3 |> dplyr::filter(
   !is.na(DateStatusChange)
 ) |> mutate(
   StatusDiff = ymd(DateStatusChange) - ymd(`Date of Occurrence`)
@@ -1694,19 +1644,19 @@ Split out into arrays to bounce against for each Product report
 
 ```{r}
 
-ComplicInfection <- ComplicTable3 |> dplyr::group_by(TreatmentID) |> filter(Infection == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicLigament_Tendon <- ComplicTable3 |> group_by(TreatmentID) |> filter(Ligament_Tendon == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicStiffness <- ComplicTable3 |> group_by(TreatmentID) |> filter(Stiffness == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicLoosening <- ComplicTable3 |> group_by(TreatmentID) |> filter(Loosening == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicHardware <- ComplicTable3 |> group_by(TreatmentID) |> filter(Hardware == "Yes" & Loosening == "No") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicInstability <- ComplicTable3 |> group_by(TreatmentID) |> filter(Instability == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicNeurological <- ComplicTable3 |> group_by(TreatmentID) |> filter(Neurological == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicFracture <- ComplicTable3 |> group_by(TreatmentID) |> filter(Fracture == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicThrombosis <- ComplicTable3 |> group_by(TreatmentID) |> filter(Thrombosis == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicEffusion <- ComplicTable3 |> group_by(TreatmentID) |> filter(Effusion == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicPain <- ComplicTable3 |> group_by(TreatmentID) |> filter(PainIsol == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicOther <- ComplicTable3 |> group_by(TreatmentID) |> filter(Other == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
-ComplicReop <- ComplicTable3 |> group_by(TreatmentID) |> filter(`Reoperation Procedure` == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicInfection <- ComplicTable3 |> dplyr::group_by(TreatmentID) |> dplyr::filter(Infection == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicLigament_Tendon <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(Ligament_Tendon == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicStiffness <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(Stiffness == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicLoosening <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(Loosening == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicHardware <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(Hardware == "Yes" & Loosening == "No") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicInstability <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(Instability == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicNeurological <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(Neurological == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicFracture <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(Fracture == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicThrombosis <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(Thrombosis == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicEffusion <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(Effusion == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicPain <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(PainIsol == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicOther <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(Other == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
+ComplicReop <- ComplicTable3 |> group_by(TreatmentID) |> dplyr::filter(`Reoperation Procedure` == "Yes") |> slice_min(DateOccurFix, n = 1) |> ungroup()
 
 
 ```
@@ -1723,7 +1673,7 @@ Intraoperative complications were reviewed manually for mechanism.
 # Authenticate for sheets using the same token
 gs4_auth(token = drive_token())
 
-ComplicDiscrep <- ComplicTable3 |> filter(
+ComplicDiscrep <- ComplicTable3 |> dplyr::filter(
   DateCheck == "Check"|
     is.na(`Complication Nature`)|
     (`Reoperation Procedure` == "Yes" & `Complication Occurrence` == "No")
@@ -1732,7 +1682,7 @@ ComplicDiscrep <- ComplicTable3 |> filter(
 #Identify duplicate entries
 ComplicDiscrep2 <- ComplicTable3 |>
   group_by(TreatmentID, DateOccurFix) |>
-  filter(n() > 1)
+  dplyr::filter(n() > 1)
 
 # Identify the problematic codes that are not linking back to the ProductTable correctly
 
@@ -1764,7 +1714,7 @@ gs4_auth(token = drive_token())
  #             range = "A1:AC")
 
  with_gs4_quiet(range_write(SnapshotComb2a |>
-               filter(SurgicalTreatment == "Surgical" & is.na(ComplicationOccurrence)) |>
+               dplyr::filter(SurgicalTreatment == "Surgical" & is.na(ComplicationOccurrence)) |>
                dplyr::select(TreatmentID,DateTreatment),
              ss = SheetIDs$AuditResults,
              sheet = "ComplicMissing",
@@ -1900,7 +1850,7 @@ TableRepB <-
     Surgeon == "GB" ~ "C",
     .default = NA_character_
   )) |>
-  filter(SurgicalTreatment == "Surgical" &
+  dplyr::filter(SurgicalTreatment == "Surgical" &
           !grepl("Pending",TreatmentStatus)) |>
   dplyr::select(
     AgeAtInitialExam, 
@@ -1980,7 +1930,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label: Reference-Code-Rep1
 
-RefCode1 <- ProductTable |> filter(
+RefCode1 <- ProductTable |> dplyr::filter(
   Category == "Anchor + Suture" &
   stringr::str_detect(stringr::str_to_lower(Description),"advance") &
   stringr::str_detect(stringr::str_to_lower(Description),"peek") &
@@ -1997,7 +1947,7 @@ RefCode1 <- ProductTable |> filter(
 Pattern1 <- "(healix advance peek dynacord)"
 
 SelectRep1 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode1$Reference,collapse = "|"))
   ) |> mutate(
     Product1Check = stringr::str_detect(stringr::str_to_lower(Product1),Pattern1),
@@ -2087,12 +2037,12 @@ SliceCheck <- ComplicTable3 |>
 #| label: Select-PROMs-Rep1
 
 SelectRep1PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode1$Reference,collapse = "|"))
   )
 
 SelectRep1PROM2 <- SnapshotPROM2 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode1$Reference,collapse = "|"))
   )
 
@@ -2101,15 +2051,15 @@ SelectRep1PROM2 <- SnapshotPROM2 |>
 ```{r}
 #| label: Select-Procedure-Rep1
 
-SelectRep1RC <- SelectRep1 |> filter(str_detect(CuffRepair,"Repair"))
-#SelectRep1RCno <- SelectRep1 |> filter(str_detect(CuffRepair,"Repair",negate = TRUE) | is.na(CuffRepair))
+SelectRep1RC <- SelectRep1 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
+#SelectRep1RCno <- SelectRep1 |> dplyr::filter(str_detect(CuffRepair,"Repair",negate = TRUE) | is.na(CuffRepair))
 
-SelectRep1RCPROM1 <- SelectRep1PROM1 |> filter(str_detect(CuffRepair,"Repair"))
-SelectRep1RCPROM2 <- SelectRep1PROM2 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep1RCPROM1 <- SelectRep1PROM1 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
+SelectRep1RCPROM2 <- SelectRep1PROM2 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep1BT <- SelectRep1 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep1BTPROM1<- SelectRep1PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep1BTPROM2<- SelectRep1PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep1BT <- SelectRep1 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep1BTPROM1<- SelectRep1PROM1 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep1BTPROM2<- SelectRep1PROM2 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
 ## Overview
@@ -2229,15 +2179,14 @@ TableRep1RC1 <- SelectRep1RC |> mutate(
       columns = label,
       rows = label == "Patient Record Active",
       footnote = "Patient record remains open - no change to consent or mortality status"
-  )
+  ) |> gtsummary::as_flex_table() |> 
+  flextable::set_table_properties(
+    width = 1, 
+    layout = "autofit"
+  ) |> flextable::autofit(add_w = 0, add_h = 0) |>
+  flextable::fontsize(size = 12, part = "all")
 
-gtsummary::as_flex_table(TableRep1RC1) |> flextable::set_table_properties(
-  layout = "autofit",
-  align = "center",
-  opts_word = list(
-    repeat_headers = TRUE
-    )
-)
+knitr::knit_print(TableRep1RC1)
 
 ```
 
@@ -2248,7 +2197,7 @@ Surgical findings and management strategies are summarised below.
 ```{r}
 #| eval: false
 
-CuffStatus1 <- SelectRep1RC |> filter(is.na(CuffStatus))
+CuffStatus1 <- SelectRep1RC |> dplyr::filter(is.na(CuffStatus))
 ```
 
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
@@ -2284,15 +2233,13 @@ TableRep1RC2 <-
       columns = label,
       rows = label == "Other",
       footnote = "Biceps tendon integration; Biceps tendon transfer; Tendon advancement"
-    ) 
+    ) |> gtsummary::as_flex_table() |> 
+  flextable::set_table_properties(
+    width = 1, 
+    layout = "autofit"
+  ) |> flextable::autofit(add_w = 0, add_h = 0)
 
-gtsummary::as_flex_table(TableRep1RC2) |> flextable::set_table_properties(
-  layout = "autofit",
-  align = "center",
-  opts_word = list(
-    split = TRUE
-    )
-)
+knitr::knit_print(TableRep1RC2)
 
   
 ```
@@ -2325,15 +2272,13 @@ TableRep1RC3 <- tbl_survfit(
   ) |> gtsummary::modify_footnote_header(
     footnote = "% survival with 95% confidence intervals",
     columns = all_stat_cols(),
-  )
+  ) |> gtsummary::as_flex_table() |> 
+  flextable::set_table_properties(
+    width = 1, 
+    layout = "autofit"
+  ) |> flextable::autofit(add_w = 0, add_h = 0)
 
-gtsummary::as_flex_table(TableRep1RC3) |> flextable::set_table_properties(
-  layout = "autofit",
-  align = "left",
-  opts_word = list(
-    split = TRUE
-    )
-)
+knitr::knit_print(TableRep1RC3)
 
 ```
 
@@ -2347,7 +2292,7 @@ FailuresRep1RC <-
   SelectRep1RC |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -2395,10 +2340,16 @@ if (nrow(FailuresRep1RC) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep1A-display
 
-if (nrow(FailuresRep1RC) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep1RC) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -2411,7 +2362,7 @@ Complications and adverse events are summarised below.
 ```{r}
 #| label:  Complication-Other-Rep1
 
-SelectRep1Other <- SelectRep1 |> filter(
+SelectRep1Other <- SelectRep1 |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -2420,24 +2371,25 @@ SelectRep1Other <- SelectRep1 |> filter(
 )
 ```
 
+
 ```{r}
 #| label: tbl-intraop-complications-1A
 #| tbl-cap: "Summary of PRULO Report 1 (Rotator Cuff) Cases - Intraoperative Events"
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep1RC |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep1RC)
   complication_cases <- SelectRep1RC |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -2457,7 +2409,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep1RC$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep1RC$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -2468,18 +2420,19 @@ if (!has_complications) {
       Description,
       Intervention,
       PostopManagement
-    ) |> 
-    gt::gt()
+    ) |> flextable::as_flextable()
 }
-
 ```
 
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
+
 ```{r}
-#| label: tbl-Rep1RC4
+#| label: tbl-Rep1RC5
 #| tbl-cap: "Summary of PRULO Report 1 (Rotator Cuff) Cases - Postoperative Events."
 
 # Now create the summary table
-TableRep1RC4 <- SelectRep1RC |>
+TableRep1RC5 <- SelectRep1RC |>
   dplyr::select(
     Infection,
     Ligament_Tendon,
@@ -2532,15 +2485,13 @@ TableRep1RC4 <- SelectRep1RC |>
       columns = label,
       rows = label == "Reoperation Delay (Weeks)",
       footnote = "Time between index procedure and reoperation"
-    ) 
+    ) |> gtsummary::as_flex_table() |> 
+  flextable::set_table_properties(
+    width = 1, 
+    layout = "autofit"
+  ) |> flextable::autofit(add_w = 0, add_h = 0)
 
-gtsummary::as_flex_table(TableRep1RC4) |> flextable::set_table_properties(
-  layout = "autofit",
-  align = "center",
-  opts_word = list(
-  split = TRUE
-  )
-)
+knitr::knit_print(TableRep1RC5)
 
 ```
 
@@ -2556,7 +2507,7 @@ gtsummary::as_flex_table(TableRep1RC4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep1RCReop <- ComplicTable3 |> filter(
+SelectRep1RCReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep1RC$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -2607,7 +2558,7 @@ SelectRep1RCReop <- ComplicTable3 |> filter(
 ```
 
 ```{r}
-#| label:  Reoperations-Report-Rep1A-Proc1
+#| label:  Reoperations-Report-Rep1A-write
 #| eval: false
 #| include: false
 
@@ -2633,10 +2584,16 @@ if (nrow(SelectRep1RCReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep1A-Proc1-display
 
-if (nrow(SelectRep1RCReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep1RCReop) == 0,
+  "There are no reoperations to report.",
+  'Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -2669,7 +2626,7 @@ Rep1RCPROM1 / Rep1RCPROM2 / Rep1RCPROM3
 #| tbl-cap: "Summary of PRULO Report 1 (Rotator Cuff) Cases - QuickDASH"
 
 
-TableRep1RC5 <- SelectRep1RCPROM1 |>
+TableRep1RC6 <- SelectRep1RCPROM1 |>
 dplyr::select(
   QDASH,
   QDASHDelta,
@@ -2681,16 +2638,15 @@ tbl_summary(by = "Timepoint",
               QDASHDelta ~ "continuous"
             ),
             statistic = all_continuous() ~ "{median} ({p25} - {p75})"
-            ) 
+            ) |> gtsummary::as_flex_table() |> 
+  flextable::set_table_properties(
+    width = 1, 
+    layout = "autofit"
+  ) |> flextable::autofit(add_w = 0, add_h = 0)
+
+knitr::knit_print(TableRep1RC6)
 
 
-gtsummary::as_flex_table(TableRep1RC5) |> flextable::set_table_properties(
-  layout = "autofit",
-  align = "center",
-  opts_word = list(
-  split = TRUE
-  )
-)
 
 
 
@@ -2701,7 +2657,7 @@ gtsummary::as_flex_table(TableRep1RC5) |> flextable::set_table_properties(
 #| tbl-cap: "Summary of PRULO Report 1 (Rotator Cuff) Cases - Western Ontario Rotator Cuff Index"
 
 
-TableRep1RC6 <- SelectRep1RCPROM2 |>
+TableRep1RC7 <- SelectRep1RCPROM2 |>
 dplyr::select(WORCNorm,
               WORCPhysicalQ3,
               WORCDelta,
@@ -2713,17 +2669,16 @@ tbl_summary(by = "Timepoint",
               WORCPhysicalQ3 ~ "continuous",
               WORCDelta ~ "continuous"
             ),
-            statistic = all_continuous() ~ "{median} ({p25} - {p75})")  
+            statistic = all_continuous() ~ "{median} ({p25} - {p75})") |> gtsummary::as_flex_table() |> 
+  flextable::set_table_properties(
+    width = 1, 
+    layout = "autofit"
+  ) |> flextable::autofit(add_w = 0, add_h = 0)
 
-gtsummary::as_flex_table(TableRep1RC6) |> flextable::set_table_properties(
-  layout = "autofit",
-  align = "center",
-  opts_word = list(
-  split = TRUE
-  )
-)
+knitr::knit_print(TableRep1RC7)
 
 ```
+
 
 ## Procedure Report - Biceps Tenodesis
 
@@ -2905,7 +2860,7 @@ FailuresRep1BT <-
   SelectRep1BT |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -2974,10 +2929,16 @@ if (nrow(FailuresRep1BT) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep1B-display
 
-if (nrow(FailuresRep1BT) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep1BT) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -2995,18 +2956,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep1BT |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep1BT)
   complication_cases <- SelectRep1BT |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -3026,7 +2987,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep1BT$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep1BT$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -3037,11 +2998,13 @@ if (!has_complications) {
       Description,
       Intervention,
       PostopManagement
-    ) |> 
-    gt::gt()
+    ) |> flextable::as_flextable()
 }
 
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
+
 
 ```{r}
 #| label: tbl-rept1bt4
@@ -3117,7 +3080,7 @@ gtsummary::as_flex_table(TableRep1BT4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep1BTReop <- ComplicTable3 |> filter(
+SelectRep1BTReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep1BT$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -3191,10 +3154,16 @@ if (nrow(SelectRep1BTReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep1B-display
 
-if (nrow(SelectRep1BTReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep1BTReop) == 0,
+  "There are no reoperations to report.",
+  'Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -3306,7 +3275,7 @@ RefCode2 <- ProductTable |> filter(
 Pattern2 <- "healix advance knotless peek"
 
 SelectRep2 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode2$Reference,collapse = "|"))
   ) |> mutate(
     Product1Check = stringr::str_detect(stringr::str_to_lower(Product1),Pattern2),
@@ -3371,12 +3340,12 @@ SelectRep2 <- SnapshotComb4 |>
 #| label: PROMs-Rep2
 
 SelectRep2PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode2$Reference,collapse = "|"))
   )
 
 SelectRep2PROM2 <- SnapshotPROM2 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode2$Reference,collapse = "|"))
   )
 
@@ -3385,14 +3354,14 @@ SelectRep2PROM2 <- SnapshotPROM2 |>
 ```{r}
 #| label:  Procedure-Rep2
 
-SelectRep2RC <- SelectRep2 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep2RC <- SelectRep2 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep2RCPROM1 <- SelectRep2PROM1 |> filter(str_detect(CuffRepair,"Repair"))
-SelectRep2RCPROM2 <- SelectRep2PROM2 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep2RCPROM1 <- SelectRep2PROM1 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
+SelectRep2RCPROM2 <- SelectRep2PROM2 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep2BT <- SelectRep2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep2BTPROM1<- SelectRep2PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep2BTPROM2<- SelectRep2PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep2BT <- SelectRep2 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep2BTPROM1<- SelectRep2PROM1 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep2BTPROM2<- SelectRep2PROM2 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
 ## Overview
@@ -3529,7 +3498,7 @@ Surgical findings and management strategies are summarised below.
 #| eval: false
 
 
-CuffStatus2 <- SelectRep2RC |> filter(is.na(CuffStatus))
+CuffStatus2 <- SelectRep2RC |> dplyr::filter(is.na(CuffStatus))
 ```
 
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
@@ -3626,7 +3595,7 @@ FailuresRep2RC <-
   SelectRep2RC |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -3659,7 +3628,7 @@ FailuresRep2RC <-
 gs4_auth(token = drive_token())
 
 # Do the write operation silently
-if (nrow(FailuresRep1RC) > 0) {
+if (nrow(FailuresRep2RC) > 0) {
   invisible(
     googlesheets4::range_write(
  ss = SheetIDs$AuditReport,
@@ -3677,10 +3646,16 @@ if (nrow(FailuresRep1RC) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep2A-display
 
-if (nrow(FailuresRep2RC) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep2RC) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -3692,7 +3667,7 @@ Complications and adverse events are summarised below.
 
 ```{r}
 #| label:  Complication-Other-Rep2
-SelectRep2Other <- SelectRep2 |> filter(
+SelectRep2Other <- SelectRep2 |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -3707,18 +3682,18 @@ SelectRep2Other <- SelectRep2 |> filter(
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep2RC |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications were observed.")
+  glue::glue("No intraoperative complications were observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep2RC)
   complication_cases <- SelectRep2RC |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -3738,7 +3713,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep2RC$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep2RC$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -3754,6 +3729,8 @@ if (!has_complications) {
 }
 
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-Rep2RC4
@@ -3837,7 +3814,7 @@ TableRep2RC4 <- SelectRep2RC |>
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep2RCReop <- ComplicTable3 |> filter(
+SelectRep2RCReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep2RC$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -3915,10 +3892,16 @@ if (nrow(SelectRep1RCReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep2A-display
 
-if (nrow(SelectRep2RCReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep2RCReop) == 0,
+  "There are no reoperations to report.",
+  'Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 ```
 
@@ -4192,7 +4175,7 @@ FailuresRep2BT <-
   SelectRep2BT |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -4239,10 +4222,16 @@ if (nrow(FailuresRep2BT) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep2B-display
 
-if (nrow(FailuresRep2BT) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep2BT) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -4260,18 +4249,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep2BT |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep2BT)
   complication_cases <- SelectRep2BT |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -4291,7 +4280,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep2BT$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep2BT$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -4307,6 +4296,8 @@ if (!has_complications) {
 }
 
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-Rep2BT4
@@ -4383,7 +4374,7 @@ gtsummary::as_flex_table(TableRep2BT4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep2BTReop <- ComplicTable3 |> filter(
+SelectRep2BTReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep2BT$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -4457,10 +4448,16 @@ if (nrow(SelectRep2BTReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep2B-display
 
-if (nrow(SelectRep2BTReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep2BTReop) == 0,
+  "There are no reoperations to report.",
+  'Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -4552,7 +4549,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label:  Reference-Code-Rep3
 
-RefCode3 <- ProductTable |> filter(
+RefCode3 <- ProductTable |> dplyr::filter(
   (Category == "Anchor"|Category == "Anchor + Suture") &
   stringr::str_detect(stringr::str_to_lower(Description),"advance") &
   stringr::str_detect(stringr::str_to_lower(Description),"br") &
@@ -4568,7 +4565,7 @@ RefCode3 <- ProductTable |> filter(
 Pattern3 <- "healix advance knotless br"
 
 SelectRep3 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode3$Reference,collapse = "|"))
   ) |> mutate(
     Product1Check = stringr::str_detect(stringr::str_to_lower(Product1),Pattern3),
@@ -4630,27 +4627,28 @@ SelectRep3 <- SnapshotComb4 |>
 ```{r Select PROMs Rep3}
 
 SelectRep3PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode3$Reference,collapse = "|"))
   )
 
 SelectRep3PROM2 <- SnapshotPROM2 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode3$Reference,collapse = "|"))
   )
 
 ```
 
-```{r Select by Procedure Rep3}
+```{r}
+#| label:  procedure-selection-Rep3
 
-SelectRep3RC <- SelectRep3 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep3RC <- SelectRep3 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep3RCPROM1 <- SelectRep3PROM1 |> filter(str_detect(CuffRepair,"Repair"))
-SelectRep3RCPROM2 <- SelectRep3PROM2 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep3RCPROM1 <- SelectRep3PROM1 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
+SelectRep3RCPROM2 <- SelectRep3PROM2 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep3BT <- SelectRep3 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep3BTPROM1<- SelectRep3PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep3BTPROM2<- SelectRep3PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep3BT <- SelectRep3 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep3BTPROM1<- SelectRep3PROM1 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep3BTPROM2<- SelectRep3PROM2 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
 ## Overview
@@ -4786,7 +4784,7 @@ Surgical findings and management strategies are summarised below.
 ```{r}
 #| eval: false
 
-CuffStatus2 <- SelectRep3RC |> filter(is.na(CuffStatus))
+CuffStatus2 <- SelectRep3RC |> dplyr::filter(is.na(CuffStatus))
 ```
 
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
@@ -4881,7 +4879,7 @@ FailuresRep3RC <-
   SelectRep3RC |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -4932,10 +4930,17 @@ if (nrow(FailuresRep3RC) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep3A-display
 
-if (nrow(FailuresRep3RC) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+
+message_text <- if_else(
+  nrow(FailuresRep3RC) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -4951,18 +4956,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep3RC |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep3RC)
   complication_cases <- SelectRep3RC |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -4982,7 +4987,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep3RC$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep3RC$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -5003,7 +5008,7 @@ if (!has_complications) {
 #| label:  Complication-Other-Rep3
 
 
-SelectRep3Other <- SelectRep3 |> filter(
+SelectRep3Other <- SelectRep3 |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -5011,6 +5016,8 @@ SelectRep3Other <- SelectRep3 |> filter(
   Cohort
 )
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-Rep3RC4
@@ -5094,7 +5101,7 @@ gtsummary::as_flex_table(TableRep3RC4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep3RCReop <- ComplicTable3 |> filter(
+SelectRep3RCReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep3RC$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -5169,10 +5176,16 @@ if (nrow(SelectRep3RCReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep3A-display
 
-if (nrow(SelectRep3RCReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep3RCReop) == 0,
+  "There are no reoperations to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -5433,7 +5446,7 @@ FailuresRep3BT <-
   SelectRep3BT |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -5480,10 +5493,16 @@ if (nrow(FailuresRep3BT) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep3B-display
 
-if (nrow(FailuresRep3BT) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep3BT) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -5499,18 +5518,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep3BT |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep3BT)
   complication_cases <- SelectRep3BT |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -5530,7 +5549,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep3BT$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep3BT$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -5546,6 +5565,8 @@ if (!has_complications) {
 }
 
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-Rep3BT4
@@ -5621,7 +5642,7 @@ gtsummary::as_flex_table(TableRep3BT4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep3BTReop <- ComplicTable3 |> filter(
+SelectRep3BTReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep3BT$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -5695,10 +5716,16 @@ if (nrow(SelectRep3BTReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep3B-display
 
-if (nrow(SelectRep3BTReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep3BTReop) == 0,
+  "There are no reoperations to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -5793,7 +5820,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label: Reference-Code-Rep4
 
-RefCode4 <- ProductTable |> filter(
+RefCode4 <- ProductTable |> dplyr::filter(
   (Category == "Anchor + Suture") &
   stringr::str_detect(stringr::str_to_lower(Description),"advance") &
   stringr::str_detect(stringr::str_to_lower(Description),"br") &
@@ -5809,7 +5836,7 @@ RefCode4 <- ProductTable |> filter(
 Pattern4 <- "healix advance br dynacord"
 
 SelectRep4 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode4$Reference,collapse = "|"))
   ) |> mutate(
     Product1Check = stringr::str_detect(stringr::str_to_lower(Product1),Pattern4),
@@ -5872,12 +5899,12 @@ SelectRep4 <- SnapshotComb4 |>
 #| label: Select-PROMs-Rep4
 
 SelectRep4PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode4$Reference,collapse = "|"))
   )
 
 SelectRep4PROM2 <- SnapshotPROM2 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode4$Reference,collapse = "|"))
   )
 
@@ -5886,14 +5913,14 @@ SelectRep4PROM2 <- SnapshotPROM2 |>
 ```{r}
 #| label:  Select-Procedure-Rep4
 
-SelectRep4RC <- SelectRep4 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep4RC <- SelectRep4 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep4RCPROM1 <- SelectRep4PROM1 |> filter(str_detect(CuffRepair,"Repair"))
-SelectRep4RCPROM2 <- SelectRep4PROM2 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep4RCPROM1 <- SelectRep4PROM1 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
+SelectRep4RCPROM2 <- SelectRep4PROM2 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep4BT <- SelectRep4 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep4BTPROM1<- SelectRep4PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep4BTPROM2<- SelectRep4PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep4BT <- SelectRep4 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep4BTPROM1<- SelectRep4PROM1 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep4BTPROM2<- SelectRep4PROM2 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
 ## Overview
@@ -6026,7 +6053,7 @@ Surgical findings and management strategies are summarised below.
 ```{r}
 #| eval: false
 
-CuffStatus2 <- SelectRep4RC |> filter(is.na(CuffStatus))
+CuffStatus2 <- SelectRep4RC |> dplyr::filter(is.na(CuffStatus))
 ```
 
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
@@ -6121,7 +6148,7 @@ FailuresRep4RC <-
   SelectRep4RC |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -6172,10 +6199,16 @@ if (nrow(FailuresRep4RC) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep4A-display
 
-if (nrow(FailuresRep4RC) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep4RC) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -6191,18 +6224,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep4RC |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep4RC)
   complication_cases <- SelectRep4RC |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -6222,7 +6255,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep4RC$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep4RC$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -6233,8 +6266,7 @@ if (!has_complications) {
       Description,
       Intervention,
       PostopManagement
-    ) |> 
-    gt::gt()
+    ) |> flextable::as_flextable()
 }
 
 ```
@@ -6242,7 +6274,7 @@ if (!has_complications) {
 ```{r}
 #| label:  Complication-Other-Rep4
 
-SelectRep4Other <- SelectRep4 |> filter(
+SelectRep4Other <- SelectRep4 |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -6250,6 +6282,8 @@ SelectRep4Other <- SelectRep4 |> filter(
   Cohort
 )
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep4RC4
@@ -6329,7 +6363,7 @@ gtsummary::as_flex_table(TableRep4RC4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep4RCReop <- ComplicTable3 |> filter(
+SelectRep4RCReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep4RC$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -6404,10 +6438,16 @@ if (nrow(SelectRep4RCReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep4A-display
 
-if (nrow(SelectRep4RCReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep4RCReop) == 0,
+  "There are no reoperations to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -6670,7 +6710,7 @@ FailuresRep4BT <-
   SelectRep4BT |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -6717,10 +6757,16 @@ if (nrow(FailuresRep4BT) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep4B-display
 
-if (nrow(FailuresRep4BT) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep4BT) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -6736,18 +6782,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep4BT |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep4BT)
   complication_cases <- SelectRep4BT |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -6767,7 +6813,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep4BT$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep4BT$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -6783,6 +6829,8 @@ if (!has_complications) {
 }
 
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep4BT4
@@ -6858,7 +6906,7 @@ gtsummary::as_flex_table(TableRep4BT4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep4BTReop <- ComplicTable3 |> filter(
+SelectRep4BTReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep4BT$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -6932,10 +6980,16 @@ if (nrow(SelectRep4BTReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep4B-display
 
-if (nrow(SelectRep4BTReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep4BTReop) == 0,
+  "There are no reoperations to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -7031,7 +7085,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label:  Reference-Code-Rep5
 
-RefCode5 <- ProductTable |> filter(
+RefCode5 <- ProductTable |> dplyr::filter(
   (Category == "Anchor"|Category == "Anchor + Suture") &
   stringr::str_detect(stringr::str_to_lower(Description),"advance") &
   stringr::str_detect(stringr::str_to_lower(Description),"br") &
@@ -7046,7 +7100,7 @@ RefCode5 <- ProductTable |> filter(
 Pattern5 <- "milagro advance br"
 
 SelectRep5 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode5$Reference,collapse = "|"))
   ) |> mutate(
     Product1Check = stringr::str_detect(stringr::str_to_lower(Product1),Pattern5),
@@ -7109,12 +7163,12 @@ SelectRep5 <- SnapshotComb4 |>
 #| label: Select-PROMs-Rep5
 
 SelectRep5PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode5$Reference,collapse = "|"))
   )
 
 SelectRep5PROM2 <- SnapshotPROM2 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode5$Reference,collapse = "|"))
   )
 
@@ -7123,14 +7177,14 @@ SelectRep5PROM2 <- SnapshotPROM2 |>
 ```{r}
 #| label:  Select-Procedure-Rep5
 
-SelectRep5RC <- SelectRep5 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep5RC <- SelectRep5 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep5RCPROM1 <- SelectRep5PROM1 |> filter(str_detect(CuffRepair,"Repair"))
-SelectRep5RCPROM2 <- SelectRep5PROM2 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep5RCPROM1 <- SelectRep5PROM1 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
+SelectRep5RCPROM2 <- SelectRep5PROM2 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep5BT <- SelectRep5 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep5BTPROM1<- SelectRep5PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep5BTPROM2<- SelectRep5PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep5BT <- SelectRep5 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep5BTPROM1<- SelectRep5PROM1 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep5BTPROM2<- SelectRep5PROM2 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
 ## Overview
@@ -7266,7 +7320,7 @@ Surgical findings and management strategies are summarised below.
 ```{r}
 #| eval: false
 
-CuffStatus2 <- SelectRep5RC |> filter(is.na(CuffStatus))
+CuffStatus2 <- SelectRep5RC |> dplyr::filter(is.na(CuffStatus))
 ```
 
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
@@ -7362,7 +7416,7 @@ FailuresRep5RC <-
   SelectRep5RC |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -7413,10 +7467,16 @@ if (nrow(FailuresRep5RC) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep5A-display
 
-if (nrow(FailuresRep5RC) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep5RC) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -7432,18 +7492,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep5RC |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep5RC)
   complication_cases <- SelectRep5RC |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -7463,7 +7523,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep5RC$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep5RC$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -7483,7 +7543,7 @@ if (!has_complications) {
 ```{r}
 #| label:  Complication-Other-Rep5
 
-SelectRep5Other <- SelectRep5 |> filter(
+SelectRep5Other <- SelectRep5 |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -7491,6 +7551,8 @@ SelectRep5Other <- SelectRep5 |> filter(
   Cohort
 )
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep5RC4
@@ -7570,7 +7632,7 @@ gtsummary::as_flex_table(TableRep5RC4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep5RCReop <- ComplicTable3 |> filter(
+SelectRep5RCReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep5RC$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -7647,10 +7709,16 @@ if (nrow(SelectRep5RCReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep5A-display
 
-if (nrow(SelectRep5RCReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep5RCReop) == 0,
+  "There are no reoperations to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -7919,7 +7987,7 @@ FailuresRep5BT <-
   SelectRep5BT |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -7966,10 +8034,16 @@ if (nrow(FailuresRep5BT) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep5B-display
 
-if (nrow(FailuresRep5BT) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep5BT) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -7985,18 +8059,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep5BT |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep5BT)
   complication_cases <- SelectRep5BT |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -8016,7 +8090,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep5BT$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep5BT$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -8032,6 +8106,8 @@ if (!has_complications) {
 }
 
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep5BT4
@@ -8108,7 +8184,7 @@ gtsummary::as_flex_table(TableRep5BT4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep5BTReop <- ComplicTable3 |> filter(
+SelectRep5BTReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep5BT$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -8182,10 +8258,16 @@ if (nrow(SelectRep5BTReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep5B-display
 
-if (nrow(SelectRep5BTReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep5BTReop) == 0,
+  "There are no reoperations to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -8280,7 +8362,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label:  Reference-Code-Rep6
 
-RefCode6 <- ProductTable |> filter(
+RefCode6 <- ProductTable |> dplyr::filter(
   (Category == "Anchor"|Category == "Anchor + Suture") &
   stringr::str_detect(stringr::str_to_lower(Description),"proknot") &
   stringr::str_detect(stringr::str_to_lower(Description),"br") &
@@ -8295,7 +8377,7 @@ RefCode6 <- ProductTable |> filter(
 Pattern6 <- "gryphon proknot br"
 
 SelectRep6 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode6$Reference,collapse = "|"))
   ) |> mutate(
     CuffStatus2 = case_when(
@@ -8363,7 +8445,7 @@ SelectRep6 <- SnapshotComb4 |>
 #| label: Select-PROMs-Rep6
 
 SelectRep6PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode6$Reference,collapse = "|"))
   )
 
@@ -8372,11 +8454,11 @@ SelectRep6PROM1 <- SnapshotPROM1 |>
 ```{r}
 #| label:  Select-Procedure-Rep6
 
-SelectRep6BR <- SelectRep6 |> filter(LabrumRepair == "Bankart")
-SelectRep6BRPROM1 <- SelectRep6PROM1 |> filter(LabrumRepair == "Bankart")
+SelectRep6BR <- SelectRep6 |> dplyr::filter(LabrumRepair == "Bankart")
+SelectRep6BRPROM1 <- SelectRep6PROM1 |> dplyr::filter(LabrumRepair == "Bankart")
 
-SelectRep6SLAP <- SelectRep6 |> filter(LabrumRepair == "SLAP")
-SelectRep6SLAPPROM1<- SelectRep6PROM1 |> filter(LabrumRepair == "SLAP")
+SelectRep6SLAP <- SelectRep6 |> dplyr::filter(LabrumRepair == "SLAP")
+SelectRep6SLAPPROM1<- SelectRep6PROM1 |> dplyr::filter(LabrumRepair == "SLAP")
 
 ```
 
@@ -8600,7 +8682,7 @@ FailuresRep6 <-
   SelectRep6 |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -8651,10 +8733,16 @@ if (nrow(FailuresRep6) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep6A-display
 
-if (nrow(FailuresRep6) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep6) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -8670,20 +8758,20 @@ Complications and adverse events are summarised below.
 
 # Check if any Count value is greater than zero in filtered data
 has_complications <- SelectRep6 |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally set chunk options and generate table
 if (has_complications == 0) {
   # If no rows, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   knitr::opts_current$set(
     label = "tbl-intraop-complications-6",
     tbl.cap = "Summary of PRULO Report 6 (All) Cases - Intraoperative Events"
   )
   
-  IntraopComp |> filter(
+  IntraopComp |> dplyr::filter(
     TreatmentID %in% SelectRep6$TreatmentID
   ) |> rename(
     Description = "ICNature2",
@@ -8702,7 +8790,7 @@ if (has_complications == 0) {
 #| label:  Complication-Other-Rep6
 
 
-SelectRep6Other <- SelectRep6 |> filter(
+SelectRep6Other <- SelectRep6 |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -8710,6 +8798,8 @@ SelectRep6Other <- SelectRep6 |> filter(
   Cohort
 )
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep64
@@ -8785,7 +8875,7 @@ gtsummary::as_flex_table(TableRep64) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep6Reop <- ComplicTable3 |> filter(
+SelectRep6Reop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep6$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -8860,10 +8950,16 @@ if (nrow(SelectRep6Reop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep6-display
 
-if (nrow(SelectRep6Reop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep6Reop) == 0,
+  "There are no reoperations to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -9103,7 +9199,7 @@ FailuresRep6BR <-
   SelectRep6BR |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -9152,10 +9248,16 @@ if (nrow(FailuresRep6BR) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep6B-display
 
-if (nrow(FailuresRep6BR) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep6BR) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -9171,18 +9273,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep6BR |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep6BR)
   complication_cases <- SelectRep6BR |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -9202,7 +9304,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep6BR$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep6BR$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -9213,8 +9315,7 @@ if (!has_complications) {
       Description,
       Intervention,
       PostopManagement
-    ) |> 
-    gt::gt()
+    ) |> flextable::as_flextable()
 }
 
 ```
@@ -9223,7 +9324,7 @@ if (!has_complications) {
 #| label:  Complication-Other-Rep6BR
 
 
-SelectRep6BROther <- SelectRep6BR |> filter(
+SelectRep6BROther <- SelectRep6BR |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -9231,6 +9332,8 @@ SelectRep6BROther <- SelectRep6BR |> filter(
   Cohort
 )
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep6BR4
@@ -9307,7 +9410,7 @@ gtsummary::as_flex_table(TableRep6BR4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep6BRReop <- ComplicTable3 |> filter(
+SelectRep6BRReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep6BR$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -9360,10 +9463,16 @@ SelectRep6BRReop <- ComplicTable3 |> filter(
 ```{r}
 #| label:  Reoperations-Report-Rep6B-display
 
-if (nrow(SelectRep6BRReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep6BRReop) == 0,
+  "There are no reoperations to report.",
+  'Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -9430,7 +9539,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label: Reference-Code-Rep7
 
-RefCode7 <- ProductTable |> filter(
+RefCode7 <- ProductTable |> dplyr::filter(
   (Category == "Anchor + Suture") &
   stringr::str_detect(stringr::str_to_lower(Description),"orthocord") &
   stringr::str_detect(stringr::str_to_lower(Description),"br") &
@@ -9445,7 +9554,7 @@ RefCode7 <- ProductTable |> filter(
 Pattern7 <- "gryphon.*br.*orthocord"
 
 SelectRep7 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes, paste(RefCode7$Reference, collapse = "|"))
   ) |> mutate(
     CuffStatus2 = case_when(
@@ -9514,7 +9623,7 @@ SelectRep7 <- SnapshotComb4 |>
 #| label:  Select-PROMs-Rep7
 
 SelectRep7PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode7$Reference,collapse = "|"))
   )
 
@@ -9523,11 +9632,11 @@ SelectRep7PROM1 <- SnapshotPROM1 |>
 ```{r}
 #| label:  Select-Procedure-Rep7
 
-SelectRep7BR <- SelectRep7 |> filter(LabrumRepair == "Bankart")
-SelectRep7BRPROM1 <- SelectRep7PROM1 |> filter(LabrumRepair == "Bankart")
+SelectRep7BR <- SelectRep7 |> dplyr::filter(LabrumRepair == "Bankart")
+SelectRep7BRPROM1 <- SelectRep7PROM1 |> dplyr::filter(LabrumRepair == "Bankart")
 
-SelectRep7SLAP <- SelectRep7 |> filter(LabrumRepair == "SLAP")
-SelectRep7SLAPPROM1<- SelectRep7PROM1 |> filter(LabrumRepair == "SLAP")
+SelectRep7SLAP <- SelectRep7 |> dplyr::filter(LabrumRepair == "SLAP")
+SelectRep7SLAPPROM1<- SelectRep7PROM1 |> dplyr::filter(LabrumRepair == "SLAP")
 
 ```
 
@@ -9757,7 +9866,7 @@ FailuresRep7 <-
   SelectRep7 |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -9808,10 +9917,16 @@ if (nrow(FailuresRep7) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep7-display
 
-if (nrow(FailuresRep7) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep7) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -9827,20 +9942,20 @@ Complications and adverse events are summarised below.
 
 # Check if any Count value is greater than zero in filtered data
 has_complications <- SelectRep7 |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally set chunk options and generate table
 if (has_complications == 0) {
   # If no rows, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   knitr::opts_current$set(
     label = "tbl-intraop-complications-7A",
     tbl.cap = "Summary of PRULO Report 7 (All) Cases - Intraoperative Events"
   )
   
-  IntraopComp |> filter(
+  IntraopComp |> dplyr::filter(
     TreatmentID %in% SelectRep7$TreatmentID
   ) |> rename(
     Description = "ICNature2",
@@ -9858,7 +9973,7 @@ if (has_complications == 0) {
 ```{r}
 #| label:  Complication-Other-Rep7
 
-SelectRep7Other <- SelectRep7 |> filter(
+SelectRep7Other <- SelectRep7 |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -9866,6 +9981,8 @@ SelectRep7Other <- SelectRep7 |> filter(
   Cohort
 )
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep74
@@ -9944,7 +10061,7 @@ gtsummary::as_flex_table(TableRep74) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep7Reop <- ComplicTable3 |> filter(
+SelectRep7Reop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep7$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -10021,10 +10138,16 @@ if (nrow(SelectRep7Reop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep7-display
 
-if (nrow(SelectRep7Reop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep7Reop) == 0,
+  "There are no reoperations to report.",
+  'Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -10263,7 +10386,7 @@ FailuresRep7BR <-
   SelectRep7BR |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -10312,10 +10435,16 @@ if (nrow(FailuresRep7BR) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep7B-display
 
-if (nrow(FailuresRep7BR) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep7BR) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -10331,18 +10460,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep7BR |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep7BR)
   complication_cases <- SelectRep7BR |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -10362,7 +10491,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep7BR$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep7BR$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -10383,7 +10512,7 @@ if (!has_complications) {
 #| label: Complication-Other-Rep7BR
 
 
-SelectRep7BROther <- SelectRep7BR |> filter(
+SelectRep7BROther <- SelectRep7BR |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -10391,6 +10520,8 @@ SelectRep7BROther <- SelectRep7BR |> filter(
   Cohort
 )
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep7BR4
@@ -10467,7 +10598,7 @@ gtsummary::as_flex_table(TableRep7BR4) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep7BRReop <- ComplicTable3 |> filter(
+SelectRep7BRReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep7BR$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -10520,10 +10651,16 @@ SelectRep7BRReop <- ComplicTable3 |> filter(
 ```{r}
 #| label:  Reoperations-Report-Rep7B-display
 
-if (nrow(SelectRep7BRReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep7BRReop) == 0,
+  "There are no reoperations to report.",
+  'Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -10592,7 +10729,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label:  Reference-Code-Rep8
 
-RefCode8 <- ProductTable |> filter(
+RefCode8 <- ProductTable |> dplyr::filter(
   (Category == "Anchor + Suture") &
   stringr::str_detect(stringr::str_to_lower(Description),"dynacord") &
   stringr::str_detect(stringr::str_to_lower(Description),"br") &
@@ -10607,7 +10744,7 @@ RefCode8 <- ProductTable |> filter(
 Pattern8 <- "gryphon.*br.*dynacord"
 
 SelectRep8 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes, paste(RefCode8$Reference, collapse = "|"))
   ) |> mutate(
     CuffStatus2 = case_when(
@@ -10676,7 +10813,7 @@ SelectRep8 <- SnapshotComb4 |>
 #| label:  Select-PROMs-Rep8
 
 SelectRep8PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode8$Reference,collapse = "|"))
   )
 
@@ -10685,11 +10822,11 @@ SelectRep8PROM1 <- SnapshotPROM1 |>
 ```{r}
 #| label:  Select-Procedure-Rep8
 
-SelectRep8BR <- SelectRep8 |> filter(LabrumRepair == "Bankart")
-SelectRep8BRPROM1 <- SelectRep8PROM1 |> filter(LabrumRepair == "Bankart")
+SelectRep8BR <- SelectRep8 |> dplyr::filter(LabrumRepair == "Bankart")
+SelectRep8BRPROM1 <- SelectRep8PROM1 |> dplyr::filter(LabrumRepair == "Bankart")
 
-SelectRep8SLAP <- SelectRep8 |> filter(LabrumRepair == "SLAP")
-SelectRep8SLAPPROM1<- SelectRep8PROM1 |> filter(LabrumRepair == "SLAP")
+SelectRep8SLAP <- SelectRep8 |> dplyr::filter(LabrumRepair == "SLAP")
+SelectRep8SLAPPROM1<- SelectRep8PROM1 |> dplyr::filter(LabrumRepair == "SLAP")
 
 ```
 
@@ -10738,7 +10875,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label: Reference-Code-Rep9 
 
-RefCode9 <- ProductTable |> filter(
+RefCode9 <- ProductTable |> dplyr::filter(
   (Category == "Anchor + Suture") &
   stringr::str_detect(stringr::str_to_lower(Description),"dynacord") &
   stringr::str_detect(stringr::str_to_lower(Description),"peek") &
@@ -10753,7 +10890,7 @@ RefCode9 <- ProductTable |> filter(
 Pattern9 <- "gryphon.*peek.*dynacord"
 
 SelectRep9 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes, paste(RefCode9$Reference, collapse = "|"))
   ) |> mutate(
     CuffStatus2 = case_when(
@@ -10822,7 +10959,7 @@ SelectRep9 <- SnapshotComb4 |>
 #| label: Select-PROMs-Rep9 
 
 SelectRep9PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode9$Reference,collapse = "|"))
   )
 
@@ -10831,8 +10968,8 @@ SelectRep9PROM1 <- SnapshotPROM1 |>
 ```{r}
 #| label: Select-Procedure-Rep9 
 
-SelectRep9BR <- SelectRep9 |> filter(LabrumRepair == "Bankart")
-SelectRep9BRPROM1 <- SelectRep9PROM1 |> filter(LabrumRepair == "Bankart")
+SelectRep9BR <- SelectRep9 |> dplyr::filter(LabrumRepair == "Bankart")
+SelectRep9BRPROM1 <- SelectRep9PROM1 |> dplyr::filter(LabrumRepair == "Bankart")
 
 ```
 
@@ -10882,18 +11019,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep9 |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep9)
   complication_cases <- SelectRep9 |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -10913,7 +11050,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep9$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep9$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -10929,6 +11066,8 @@ if (!has_complications) {
 }
 
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep-PC-9
@@ -11008,7 +11147,7 @@ gtsummary::as_flex_table(TableRep_PC9) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep9Reop <- ComplicTable3 |> filter(
+SelectRep9Reop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep9$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -11083,10 +11222,16 @@ if (nrow(SelectRep9Reop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep9-display
 
-if (nrow(SelectRep9Reop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep9Reop) == 0,
+  "There are no reoperations to report.",
+  'Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -11101,7 +11246,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label: Reference-Code-Rep10 
 
-RefCode10 <- ProductTable |> filter(
+RefCode10 <- ProductTable |> dplyr::filter(
   (Category == "Screw" | Category == "Interference Screw") &
   stringr::str_detect(stringr::str_to_lower(Description),"latarjet")
 )
@@ -11114,7 +11259,7 @@ RefCode10 <- ProductTable |> filter(
 Pattern10 <- "latarjet"
 
 SelectRep10 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes, paste(RefCode10$Reference, collapse = "|"))
   ) |> mutate(
     CuffStatus2 = case_when(
@@ -11183,7 +11328,7 @@ SelectRep10 <- SnapshotComb4 |>
 #| label: Select-PROMs-Rep10 
 
 SelectRep10PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode10$Reference,collapse = "|"))
   )
 
@@ -11406,7 +11551,7 @@ FailuresRep10 <-
   SelectRep10 |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -11457,10 +11602,16 @@ if (nrow(FailuresRep10) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep10-display
 
-if (nrow(FailuresRep10) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep10) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -11476,18 +11627,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep10 |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep10)
   complication_cases <- SelectRep10 |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -11507,7 +11658,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep10$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep10$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -11526,7 +11677,7 @@ if (!has_complications) {
 
 ```{r}
 #| label: Complication-Other-Rep10 
-SelectRep10Other <- SelectRep10 |> filter(
+SelectRep10Other <- SelectRep10 |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -11534,6 +11685,8 @@ SelectRep10Other <- SelectRep10 |> filter(
   Cohort
 )
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep104
@@ -11615,7 +11768,7 @@ gtsummary::as_flex_table(TableRep104) |> flextable::set_table_properties(
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep10Reop <- ComplicTable3 |> filter(
+SelectRep10Reop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep10$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -11692,10 +11845,16 @@ if (nrow(SelectRep10Reop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep10-display
 
-if (nrow(SelectRep10Reop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep10Reop) == 0,
+  "There are no reoperations to report.",
+  'Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -11762,7 +11921,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label: Reference-Code-Rep11 
 
-RefCode11 <- ProductTable |> filter(
+RefCode11 <- ProductTable |> dplyr::filter(
   (Category == "Suture") &
  stringr::str_detect(stringr::str_to_lower(Description),"dynacord") 
 )
@@ -11775,7 +11934,7 @@ RefCode11 <- ProductTable |> filter(
 Pattern11 <- "dynacord.*pack"
 
 SelectRep11 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode11$Reference,collapse = "|"))
   ) |> mutate(
     CuffStatus2 = case_when(
@@ -11843,12 +12002,12 @@ SelectRep11 <- SnapshotComb4 |>
 #| label: Select-PROMs-Rep11
 
 SelectRep11PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode11$Reference,collapse = "|"))
   )
 
 SelectRep11PROM2 <- SnapshotPROM2 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode11$Reference,collapse = "|"))
   )
 
@@ -11857,14 +12016,14 @@ SelectRep11PROM2 <- SnapshotPROM2 |>
 ```{r}
 #| label: Select-Procedure-Rep11
 
-SelectRep11RC <- SelectRep11 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep11RC <- SelectRep11 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep11RCPROM1 <- SelectRep11PROM1 |> filter(str_detect(CuffRepair,"Repair"))
-SelectRep11RCPROM2 <- SelectRep11PROM2 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep11RCPROM1 <- SelectRep11PROM1 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
+SelectRep11RCPROM2 <- SelectRep11PROM2 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep11BT <- SelectRep11 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep11BTPROM1<- SelectRep11PROM1 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
-SelectRep11BTPROM2<- SelectRep11PROM2 |> filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep11BT <- SelectRep11 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep11BTPROM1<- SelectRep11PROM1 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
+SelectRep11BTPROM2<- SelectRep11PROM2 |> dplyr::filter(str_detect(LongHeadBiceps,"Tenodesis"))
 ```
 
 ## Overview
@@ -12004,7 +12163,7 @@ Surgical findings and management strategies are summarised below.
 ```{r}
 #| eval: false
 
-CuffStatus2 <- SelectRep11RC |> filter(is.na(CuffStatus))
+CuffStatus2 <- SelectRep11RC |> dplyr::filter(is.na(CuffStatus))
 ```
 
 <!--# There are a couple of cases that do not seem to fit the cuff status field properly. There is one GHI case that has the repair details (1399.1), but not cuff status inserted. The other is a general case that is a retorn RCR that probably needs to be moved across cohorts (193.2). -->
@@ -12097,7 +12256,7 @@ FailuresRep11RC <-
   SelectRep11RC |> mutate(
     TreatmentStatusDesc = stringr::str_to_sentence(TreatmentStatusNotes)
   ) |>
-      filter(TreatmentStatus == "Failed") |> 
+      dplyr::filter(TreatmentStatus == "Failed") |> 
   dplyr::select(
     TreatmentID,
     AgeAtInitialExam, 
@@ -12148,10 +12307,16 @@ if (nrow(FailuresRep11RC) > 0) {
 ```{r}
 #| label:  Failure-Report-Rep11-display
 
-if (nrow(FailuresRep11RC) == 0) {
-  epoxy::epoxy_html("There are no failures to report.")
+message_text <- if_else(
+  nrow(FailuresRep11RC) == 0,
+  "There are no failures to report.",
+  'Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  glue::glue(message_text)
 }
 
 
@@ -12167,18 +12332,18 @@ Complications and adverse events are summarised below.
 
 # Check if any complications exist in filtered data
 has_complications <- SelectRep11RC |> 
-  filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+  dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
   nrow() > 0
 
 # Conditionally generate content
 if (!has_complications) {
   # If no complications, return the text message
-  epoxy_html("No intraoperative complications observed.")
+  glue::glue("No intraoperative complications observed.")
 } else {
   # Calculate incidence and confidence intervals
   total_cases <- nrow(SelectRep11RC)
   complication_cases <- SelectRep11RC |> 
-    filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% IntraopComp$TreatmentID) |> 
     nrow()
   
   # Calculate proportion and 95% CI using Wilson method
@@ -12198,7 +12363,7 @@ if (!has_complications) {
   
   # Generate and return the table
   IntraopComp |> 
-    filter(TreatmentID %in% SelectRep11RC$TreatmentID) |> 
+    dplyr::filter(TreatmentID %in% SelectRep11RC$TreatmentID) |> 
     rename(
       Description = "ICNature2",
       Intervention = "ICIntervention",
@@ -12218,7 +12383,7 @@ if (!has_complications) {
 ```{r}
 #| label: Complication-Other-Rep11
 
-SelectRep11Other <- SelectRep11 |> filter(
+SelectRep11Other <- SelectRep11 |> dplyr::filter(
   Other == TRUE
 ) |> dplyr::select(
   TreatmentID,
@@ -12226,6 +12391,8 @@ SelectRep11Other <- SelectRep11 |> filter(
   Cohort
 )
 ```
+
+Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
 ```{r}
 #| label: tbl-TableRep11RC4
@@ -12305,7 +12472,7 @@ TableRep11RC4 <- SelectRep11RC |>
 ##Flip this around so that multiple reoperations are retained
 
 
-SelectRep11RCReop <- ComplicTable3 |> filter(
+SelectRep11RCReop <- ComplicTable3 |> dplyr::filter(
   TreatmentID %in% SelectRep11RC$TreatmentID,
   `Reoperation Procedure` == "Yes"
   ) |> group_by(TreatmentID) |> slice_min(
@@ -12382,10 +12549,16 @@ if (nrow(SelectRep11RCReop) > 0) {
 ```{r}
 #| label:  Reoperations-Report-Rep11-display
 
-if (nrow(SelectRep11RCReop) == 0) {
-  epoxy::epoxy_html("There are no reoperations to report.")
+message_text <- if_else(
+  nrow(SelectRep11RCReop) == 0,
+  "There are no reoperations to report.",
+  'Reoperations were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review'
+)
+
+if (knitr::is_html_output()) {
+  epoxy::epoxy_html(message_text)
 } else {
-  epoxy::epoxy_html('Failures were written to <a href="{{SheetIDs$AuditReport}}">Attachment 1</a> for further review')
+  cat(message_text, "\n")
 }
 
 
@@ -12479,7 +12652,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label: Reference-Code-Rep12
 
-RefCode12 <- ProductTable |> filter(
+RefCode12 <- ProductTable |> dplyr::filter(
   (Category == "Suture") &
  stringr::str_detect(stringr::str_to_lower(Description),"dynatape") 
 )
@@ -12492,7 +12665,7 @@ RefCode12 <- ProductTable |> filter(
 Pattern12 <- "dynatape"
 
 SelectRep12 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode12$Reference,collapse = "|"))
   ) |> mutate(
     CuffStatus2 = case_when(
@@ -12560,12 +12733,12 @@ SelectRep12 <- SnapshotComb4 |>
 #| label: Select-PROMs-Rep12
 
 SelectRep12PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode12$Reference,collapse = "|"))
   )
 
 SelectRep12PROM2 <- SnapshotPROM2 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode12$Reference,collapse = "|"))
   )
 
@@ -12574,10 +12747,10 @@ SelectRep12PROM2 <- SnapshotPROM2 |>
 ```{r}
 #| label: Select-Procedure-Rep12
 
-SelectRep12RC <- SelectRep12 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep12RC <- SelectRep12 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 
-SelectRep12RCPROM1 <- SelectRep12PROM1 |> filter(str_detect(CuffRepair,"Repair"))
-SelectRep12RCPROM2 <- SelectRep12PROM2 |> filter(str_detect(CuffRepair,"Repair"))
+SelectRep12RCPROM1 <- SelectRep12PROM1 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
+SelectRep12RCPROM2 <- SelectRep12PROM2 |> dplyr::filter(str_detect(CuffRepair,"Repair"))
 ```
 
 ## Overview
@@ -12627,7 +12800,7 @@ The sample of patients with the relevant product group were identified and data 
 ```{r}
 #| label: Reference-Code-Rep13
 
-RefCode13 <- ProductTable |> filter(
+RefCode13 <- ProductTable |> dplyr::filter(
   (Category == "Suture") &
  stringr::str_detect(stringr::str_to_lower(Description),"orthocord") 
 )
@@ -12640,7 +12813,7 @@ RefCode13 <- ProductTable |> filter(
 Pattern13 <- "orthocord"
 
 SelectRep13 <- SnapshotComb4 |> 
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode13$Reference,collapse = "|"))
   ) |> mutate(
     case_when(
@@ -12707,12 +12880,12 @@ SelectRep13 <- SnapshotComb4 |>
 #| label: Select-PROMs-Rep13
 
 SelectRep13PROM1 <- SnapshotPROM1 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode13$Reference,collapse = "|"))
   )
 
 SelectRep13PROM2 <- SnapshotPROM2 |>
-  filter(
+  dplyr::filter(
     str_detect(ImplantCodes,paste(RefCode13$Reference,collapse = "|"))
   )
 
@@ -12825,7 +12998,7 @@ dimnames(prop_table) <- list(colnames(SelectRepAll1), colnames(SelectRepAll1))
 for (i in 1:ncol(SelectRepAll1)) {
   # Filter data based on 1s in the current column using [[i]] to extract vector
   filtered_data <- SelectRepAll1 |> 
-    filter(SelectRepAll1[[i]] == 1)
+    dplyr::filter(SelectRepAll1[[i]] == 1)
   
   # Check if there are any 1s in the current column
   if (nrow(filtered_data) > 0) {
