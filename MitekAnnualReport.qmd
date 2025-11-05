@@ -13032,7 +13032,7 @@ prop_table <- as.data.frame(prop_table) |>
     decimals = 1
   )
 
-knitr::knit_print(prop_table)
+knitr::kable(prop_table)
 
 ```
 
