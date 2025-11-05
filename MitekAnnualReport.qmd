@@ -13032,9 +13032,14 @@ prop_table <- as.data.frame(prop_table) |>
     decimals = 1
   )
 
-knitr::kable(prop_table)
+
+knitr::knit_print(prop_table)
+
 
 ```
+
+
+
 
 ## Proportion with multiple products
 
