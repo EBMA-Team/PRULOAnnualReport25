@@ -1,7 +1,7 @@
 ---
 title: "Usage and Outcomes of DePuy-Mitek Hardware for Shoulder Surgery"
 author: 
-   - name: Corey Scholes
+  - name: Corey Scholes
     orcid: 0000-0001-6592-0738
     email: cscholes@ebma.com.au
     affiliations: EBM Analytics
