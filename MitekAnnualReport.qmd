@@ -1,11 +1,15 @@
 ---
 title: "Usage and Outcomes of DePuy-Mitek Hardware for Shoulder Surgery"
-author: "Corey Scholes"
+author: 
+   - name: Corey Scholes
+    orcid: 0000-0001-6592-0738
+    email: cscholes@ebma.com.au
+    affiliations: EBM Analytics
 type: "website"
 number-sections: true
 number-depth: 3
 date: "2025-Apr-11"
-date-modified: "2025-Oct-10"
+date-modified: "2025-Nov-06"
 bibliography: MitekReport references.bib
 format: 
   html:
@@ -178,7 +182,6 @@ drive_auth(cache = ".secrets", email = TRUE)
 ## Functions for Processing
 
 Include a series of functions to call later in the file for processing data imports.
-
 
 ```{r}
 #| label: Snapshot-folder
@@ -2371,7 +2374,6 @@ SelectRep1Other <- SelectRep1 |> dplyr::filter(
 )
 ```
 
-
 ```{r}
 #| label: tbl-intraop-complications-1A
 #| tbl-cap: "Summary of PRULO Report 1 (Rotator Cuff) Cases - Intraoperative Events"
@@ -2423,7 +2425,6 @@ if (!has_complications) {
     ) |> flextable::as_flextable()
 }
 ```
-
 
 Postoperative complications were recoded from report text where definitions were met and the results summarised.
 
@@ -2678,7 +2679,6 @@ tbl_summary(by = "Timepoint",
 knitr::knit_print(TableRep1RC7)
 
 ```
-
 
 ## Procedure Report - Biceps Tenodesis
 
@@ -3004,7 +3004,6 @@ if (!has_complications) {
 ```
 
 Postoperative complications were recoded from report text where definitions were met and the results summarised.
-
 
 ```{r}
 #| label: tbl-rept1bt4
@@ -12912,7 +12911,7 @@ Usage of the Product within the patient group is summarised below.
 
 # Product usage patterns
 
-Product usage patterns were determined by merging multiple product datasets into a single table. This combined data was then modified to include additional information and restructured to have separate columns for different product groups. Following this, a list of product category names was established and proportions for various combinations were calculated. The results were reformatted for presentation, with count data incorporated and proportions displayed as percentages.
+Product usage patterns were determined by merging multiple product datasets into a single table. This combined data was then modified to include additional information and restructured to have separate columns for different product groups. Following this, a list of product category names was established and proportions for various combinations were calculated. The results were reformatted for presentation, with count data incorporated and proportions displayed as percentages. A copy of the table was written to [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit?usp=sharing) for further analysis.
 
 ```{r}
 #| label: Product-usage-summary
@@ -13038,9 +13037,6 @@ knitr::knit_print(prop_table)
 
 ```
 
-
-
-
 ## Proportion with multiple products
 
 The proportion of cases that contained hardware from different product codes was summarised.
@@ -13059,7 +13055,7 @@ SelectRepSum <- SelectRepAll1 |>
 
 ```
 
-A cross-tabulation of usage for all products was generated and written to an external file for further review.
+A cross-tabulation of usage for all products was generated and written to [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit?usp=sharing) for further review.
 
 ```{r}
 #| label: cross-tabulation
