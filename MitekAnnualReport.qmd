@@ -13087,7 +13087,16 @@ with_gs4_quiet(googlesheets4::range_write(
          ss = SheetIDs$AuditReport,
          data = cooccurrence_table,
          sheet = "ProductUsage",
-         range = "A1:N",
+         range = "A1:N14",
+         col_names = TRUE
+         )
+       )
+
+with_gs4_quiet(googlesheets4::range_write(
+         ss = SheetIDs$AuditReport,
+         data = prop_table$`_data`,
+         sheet = "ProductUsage",
+         range = "A16:029",
          col_names = TRUE
          )
        )
