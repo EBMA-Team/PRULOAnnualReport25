@@ -12911,7 +12911,7 @@ Usage of the Product within the patient group is summarised below.
 
 # Product usage patterns
 
-Product usage patterns were determined by merging multiple product datasets into a single table. This combined data was then modified to include additional information and restructured to have separate columns for different product groups. Following this, a list of product category names was established and proportions for various combinations were calculated. The results were reformatted for presentation, with count data incorporated and proportions displayed as percentages. A copy of the table was written to [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit?usp=sharing) for further analysis.
+Product usage patterns were determined by merging multiple product datasets into a single table. This combined data was then modified to include additional information and restructured to have separate columns for different product groups. Following this, a list of product category names was established and proportions for various combinations were calculated. The results were reformatted for presentation, with count data incorporated and proportions displayed as percentages. The table was written to [Attachment 1](https://docs.google.com/spreadsheets/d/1ESVvSKAv8ma11kri9pby6OEU9Gk5Z3UnF6XwjXBTcTg/edit?usp=sharing) for further analysis.
 
 ```{r}
 #| label: Product-usage-summary
@@ -12968,8 +12968,8 @@ SelectRepAll <- SelectRepAll |>
 ```
 
 ```{r}
-#| label: tbl-productusage
-#| tbl-cap: "Summary of product overlap for each report sample (row), the proportion of cases within that sample that also include products included in the remaining reports (columns)"
+#| label: productusage
+#| code-summary: "Summary of product overlap for each report sample (row), the proportion of cases within that sample that also include products included in the remaining reports (columns)"
 
 ReportNames <- c(
   "Healix Advance Peek with Dynacord",
@@ -13032,7 +13032,6 @@ prop_table <- as.data.frame(prop_table) |>
   )
 
 
-knitr::knit_print(prop_table)
 
 
 ```
